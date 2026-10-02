@@ -1,0 +1,181 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #F7FBFF;
+    color: #111827;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  html { scroll-behavior: smooth; }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #F7FBFF; }
+::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+
+/* ====================== */
+/* Hero entrance           */
+/* ====================== */
+@keyframes heroFadeUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes heroSlideRight {
+  from { opacity: 0; transform: translateX(40px) scale(0.97); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+.hero-fade-up-1 { animation: heroFadeUp 0.8s cubic-bezier(.22,1,.36,1) 0.05s both; }
+.hero-fade-up-2 { animation: heroFadeUp 0.8s cubic-bezier(.22,1,.36,1) 0.2s both; }
+.hero-fade-up-3 { animation: heroFadeUp 0.8s cubic-bezier(.22,1,.36,1) 0.35s both; }
+.hero-slide-right { animation: heroSlideRight 1s cubic-bezier(.22,1,.36,1) 0.25s both; }
+
+/* ================================================ */
+/* Hero Ken Burns — CONTINUOUS motion, never stops   */
+/* ================================================ */
+
+/* Each image has its own unique pan+zoom that runs
+   FOREVER at its own pace, regardless of opacity.
+   When crossfade reveals the image, it's already moving. */
+
+@keyframes kb-a {
+  0%   { transform: scale(1)    translate(0, 0); }
+  50%  { transform: scale(1.08) translate(1.5%, -1%); }
+  100% { transform: scale(1)    translate(0, 0); }
+}
+@keyframes kb-b {
+  0%   { transform: scale(1.06) translate(-1%, 0.5%); }
+  50%  { transform: scale(1)    translate(1%, -0.5%); }
+  100% { transform: scale(1.06) translate(-1%, 0.5%); }
+}
+@keyframes kb-c {
+  0%   { transform: scale(1)    translate(0.5%, 1%); }
+  50%  { transform: scale(1.07) translate(-1.5%, -0.5%); }
+  100% { transform: scale(1)    translate(0.5%, 1%); }
+}
+
+.kb-a { animation: kb-a 20s ease-in-out infinite; }
+.kb-b { animation: kb-b 24s ease-in-out infinite; }
+.kb-c { animation: kb-c 22s ease-in-out infinite; }
+
+/* Crossfade opacity for 3 images — 18s cycle.
+   At every moment combined opacity >= 1.
+   Transitions overlap so there is NEVER a static gap. */
+
+@keyframes xf-a {
+  0%   { opacity: 1; }
+  28%  { opacity: 1; }
+  38%  { opacity: 0; }
+  90%  { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes xf-b {
+  0%   { opacity: 0; }
+  28%  { opacity: 0; }
+  38%  { opacity: 1; }
+  62%  { opacity: 1; }
+  72%  { opacity: 0; }
+  100% { opacity: 0; }
+}
+@keyframes xf-c {
+  0%   { opacity: 0; }
+  62%  { opacity: 0; }
+  72%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.xf-a { animation: xf-a 18s ease-in-out infinite; }
+.xf-b { animation: xf-b 18s ease-in-out infinite; }
+.xf-c { animation: xf-c 18s ease-in-out infinite; }
+
+/* ========================== */
+/* Floating accent orbs       */
+/* ========================== */
+@keyframes floatA {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%      { transform: translate(10px, -14px) scale(1.05); }
+  66%      { transform: translate(-5px, 8px) scale(0.97); }
+}
+@keyframes floatB {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  40%      { transform: translate(-8px, 12px) scale(1.04); }
+  75%      { transform: translate(6px, -6px) scale(0.98); }
+}
+.float-a { animation: floatA 7s ease-in-out infinite; }
+.float-b { animation: floatB 6s ease-in-out infinite; }
+
+/* ========================== */
+/* Scroll reveal               */
+/* ========================== */
+.reveal-hidden {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.65s cubic-bezier(.22,1,.36,1), transform 0.65s cubic-bezier(.22,1,.36,1);
+}
+.reveal-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reveal-visible .reveal-child { opacity: 1; transform: translateY(0); }
+.reveal-hidden  .reveal-child { opacity: 0; transform: translateY(18px); }
+.reveal-child {
+  transition: opacity 0.55s cubic-bezier(.22,1,.36,1), transform 0.55s cubic-bezier(.22,1,.36,1);
+}
+.reveal-child:nth-child(1) { transition-delay: 0.06s; }
+.reveal-child:nth-child(2) { transition-delay: 0.14s; }
+.reveal-child:nth-child(3) { transition-delay: 0.22s; }
+.reveal-child:nth-child(4) { transition-delay: 0.30s; }
+
+/* ========================== */
+/* Card & icon interactions    */
+/* ========================== */
+.card-lift {
+  transition: transform 0.25s cubic-bezier(.22,1,.36,1), box-shadow 0.25s ease, border-color 0.2s ease;
+}
+.card-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(14, 165, 233, 0.1), 0 2px 6px rgba(0,0,0,0.04);
+}
+
+.icon-box {
+  transition: transform 0.3s cubic-bezier(.22,1,.36,1), background-color 0.2s ease;
+}
+.card-lift:hover .icon-box {
+  transform: scale(1.1) rotate(-3deg);
+  background-color: #E0F2FE;
+}
+
+/* Button lift */
+.btn-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.btn-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(14, 165, 233, 0.22);
+}
+.btn-lift:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(14, 165, 233, 0.15);
+}
+
+/* Salon card continuous float */
+@keyframes salonFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+.salon-float { animation: salonFloat 4s ease-in-out infinite; }
+
+/* CTA bg shimmer */
+@keyframes ctaShimmer {
+  0%   { background-position: 200% 50%; }
+  100% { background-position: -200% 50%; }
+}
+.cta-shimmer {
+  background-size: 200% 100%;
+  animation: ctaShimmer 8s ease-in-out infinite;
+}
