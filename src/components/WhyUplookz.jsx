@@ -13,25 +13,39 @@ export default function WhyUplookz() {
   ];
 
   return (
-    <section id="why-uplookz" className="py-20 md:py-24 bg-[#EFF8FF] border-t border-[#E2E8F0]">
-      <div ref={sectionRef}
-        className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${sectionVisible ? 'reveal-visible' : 'reveal-hidden'}`}>
-        <div className="text-center max-w-2xl mx-auto mb-14 space-y-2.5">
-          <p className="text-xs uppercase tracking-wider font-semibold text-[#0EA5E9]">Why UPLOOKZ</p>
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-[#111827]">Your grooming, made simpler.</h2>
+    <section id="why-uplookz" className="py-24 sm:py-32 md:py-36 bg-[#EFF8FF] border-t border-[#E2E8F0]">
+      <div
+        ref={sectionRef}
+        className={`max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 ${sectionVisible ? 'reveal-visible' : 'reveal-hidden'}`}
+      >
+        {/* Header */}
+        <div className="text-center max-w-2xl mx-auto mb-16 sm:mb-20 space-y-3">
+          <p className="text-xs uppercase tracking-[0.25em] font-bold text-[#0EA5E9]">Why UPLOOKZ</p>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-[#111827]">
+            Your grooming, made simpler.
+          </h2>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* 4 Benefit Cards with Generous Whitespace */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-7 lg:gap-8">
           {benefits.map((b) => {
             const Icon = b.icon;
             return (
-              <div key={b.title}
-                className="reveal-child card-lift bg-white border border-[#E2E8F0] hover:border-[#BAE6FD] rounded-xl p-6">
-                <div className="icon-box w-10 h-10 rounded-lg bg-[#F0F9FF] text-[#0EA5E9] flex items-center justify-center mb-5">
-                  <Icon size={20} />
+              <div
+                key={b.title}
+                className="reveal-child group bg-white border border-[#E2E8F0] hover:border-[#BAE6FD] rounded-2xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1.5 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="w-12 h-12 rounded-xl bg-[#F0F9FF] text-[#0EA5E9] flex items-center justify-center mb-7 transition-all duration-300 group-hover:scale-110 group-hover:bg-[#E0F2FE]">
+                    <Icon size={22} />
+                  </div>
+                  <h3 className="text-xl font-bold text-[#111827] tracking-tight mb-2.5">
+                    {b.title}
+                  </h3>
+                  <p className="text-sm text-[#64748B] leading-relaxed">
+                    {b.description}
+                  </p>
                 </div>
-                <h3 className="text-lg font-bold text-[#111827] mb-1.5">{b.title}</h3>
-                <p className="text-sm text-[#64748B] leading-relaxed">{b.description}</p>
               </div>
             );
           })}

@@ -12,30 +12,50 @@ export default function HowItWorks() {
   ];
 
   return (
-    <section id="how-it-works" className="py-20 md:py-24 bg-[#F7FBFF]">
-      <div ref={sectionRef}
-        className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${sectionVisible ? 'reveal-visible' : 'reveal-hidden'}`}>
-        <div className="text-center max-w-2xl mx-auto mb-14 space-y-2.5">
-          <p className="text-xs uppercase tracking-wider font-semibold text-[#0EA5E9]">How It Works</p>
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-[#111827]">Getting started is simple.</h2>
+    <section id="how-it-works" className="py-24 sm:py-32 md:py-36 bg-[#F7FBFF]">
+      <div
+        ref={sectionRef}
+        className={`max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 ${sectionVisible ? 'reveal-visible' : 'reveal-hidden'}`}
+      >
+        {/* Section Header with Refined Typography Hierarchy */}
+        <div className="text-center max-w-2xl mx-auto mb-16 sm:mb-20 space-y-3">
+          <p className="text-xs uppercase tracking-[0.25em] font-bold text-[#0EA5E9]">How It Works</p>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-[#111827]">
+            Getting started is simple.
+          </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+        {/* 3 Editorial Step Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-10">
           {steps.map((step) => {
             const Icon = step.icon;
             return (
-              <div key={step.number}
-                className="reveal-child card-lift bg-white border border-[#E2E8F0] hover:border-[#BAE6FD] rounded-xl p-7">
-                <div className="flex items-center justify-between mb-6">
-                  <span className="text-xs font-bold text-[#0284C7] bg-[#F0F9FF] px-2.5 py-1 rounded-md border border-[#BAE6FD]/60">
-                    Step {step.number}
-                  </span>
-                  <div className="icon-box w-10 h-10 rounded-lg bg-[#F0F9FF] text-[#0EA5E9] flex items-center justify-center">
-                    <Icon size={19} />
+              <div
+                key={step.number}
+                className="reveal-child group bg-white border border-[#E2E8F0] hover:border-[#BAE6FD] rounded-2xl p-8 sm:p-10 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1.5 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-8">
+                    <span className="text-xs font-bold font-mono tracking-widest text-[#0284C7] bg-[#F0F9FF] px-3 py-1.5 rounded-md border border-[#BAE6FD]/60">
+                      STEP {step.number}
+                    </span>
+                    <div className="w-12 h-12 rounded-xl bg-[#F0F9FF] text-[#0EA5E9] flex items-center justify-center transition-transform duration-300 group-hover:scale-110 group-hover:bg-[#E0F2FE]">
+                      <Icon size={22} />
+                    </div>
                   </div>
+
+                  <h3 className="text-2xl font-bold text-[#111827] tracking-tight mb-3">
+                    {step.title}
+                  </h3>
+                  <p className="text-[15px] text-[#64748B] leading-relaxed">
+                    {step.description}
+                  </p>
                 </div>
-                <h3 className="text-xl font-bold text-[#111827] mb-2">{step.title}</h3>
-                <p className="text-[15px] text-[#64748B] leading-relaxed">{step.description}</p>
+
+                <div className="pt-8 mt-6 border-t border-[#F1F5F9] flex items-center text-xs font-semibold tracking-wider text-[#0EA5E9] uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <span>Explore Step</span>
+                  <span className="ml-1">→</span>
+                </div>
               </div>
             );
           })}

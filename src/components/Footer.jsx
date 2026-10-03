@@ -12,33 +12,63 @@ export default function Footer({ onNavigate }) {
   ];
 
   return (
-    <footer className="bg-white border-t border-[#E2E8F0] py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-8 border-b border-[#E2E8F0]">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-[#0EA5E9] text-white flex items-center justify-center font-bold text-sm">U</div>
-              <span className="text-xl font-bold tracking-tight text-[#111827]">UPLOOKZ<span className="text-[#0EA5E9]">.</span></span>
+    <footer className="bg-white border-t border-[#E2E8F0] py-16 sm:py-20">
+      <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8 pb-10 border-b border-[#E2E8F0]">
+
+          <div className="space-y-2">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-[#0EA5E9] text-white flex items-center justify-center font-bold text-sm shadow-sm">
+                U
+              </div>
+              <span className="text-2xl font-bold tracking-tight text-[#111827]">
+                UPLOOKZ<span className="text-[#0EA5E9]">.</span>
+              </span>
             </div>
-            <p className="text-sm text-[#64748B] font-medium">Upgrade Your Look.</p>
+            <p className="text-sm text-[#64748B] font-medium tracking-wide">
+              Upgrade Your Look.
+            </p>
           </div>
 
-          <nav className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-[#64748B]">
+          <nav className="flex flex-wrap items-center gap-x-8 gap-y-3 text-sm font-medium text-[#64748B]">
             {footerLinks.map((link) => (
-              <a key={link.label} href={link.href} className="hover:text-[#111827] transition-colors">{link.label}</a>
+              <a
+                key={link.label}
+                href={link.href}
+                className="hover:text-[#0EA5E9] transition-colors duration-200"
+              >
+                {link.label}
+              </a>
             ))}
           </nav>
 
-          <div className="flex items-center gap-5 text-sm font-medium text-[#64748B]">
-            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#0EA5E9] transition-colors">Instagram</a>
+          <div className="flex items-center gap-5 text-sm font-semibold text-[#64748B]">
+            <a
+              href="https://instagram.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-[#0EA5E9] transition-colors duration-200"
+            >
+              Instagram
+            </a>
             <span className="text-[#CBD5E1]">•</span>
-            <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#0EA5E9] transition-colors">LinkedIn</a>
+            <a
+              href="https://linkedin.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-[#0EA5E9] transition-colors duration-200"
+            >
+              LinkedIn
+            </a>
           </div>
+
         </div>
 
-        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#94A3B8]">
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#94A3B8]">
           <p>© {currentYear} UPLOOKZ. All rights reserved.</p>
-          <p>Modern salon and grooming platform for both men and women.</p>
+          <p className="font-normal text-center sm:text-right">
+            Modern salon and grooming platform for both men and women.
+          </p>
         </div>
       </div>
     </footer>
