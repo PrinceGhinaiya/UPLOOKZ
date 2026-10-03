@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, EyeOff, Lock, User, ArrowLeft, ArrowRight, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Eye, EyeOff, Lock, User, ArrowLeft, ArrowRight, ShieldCheck, CheckCircle2, Sparkles } from 'lucide-react';
 
 export default function LoginPage({ onNavigate, initialRole = 'customer' }) {
   const [role, setRole] = useState(initialRole);
@@ -10,6 +10,7 @@ export default function LoginPage({ onNavigate, initialRole = 'customer' }) {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [forgotPasswordNotice, setForgotPasswordNotice] = useState(false);
+  const [imgSrc, setImgSrc] = useState('/images/login-bg.jpg');
 
   // Sync role if initialRole changes or from URL search params
   useEffect(() => {
@@ -33,7 +34,7 @@ export default function LoginPage({ onNavigate, initialRole = 'customer' }) {
     setError('');
     setForgotPasswordNotice(false);
 
-    // Validation
+    // Form Validation
     if (!emailOrPhone.trim()) {
       setError('Please enter your email or phone number');
       return;
@@ -46,7 +47,6 @@ export default function LoginPage({ onNavigate, initialRole = 'customer' }) {
     setIsLoading(true);
 
     // Clean, integration-ready transition
-    // Redirects to respective customer/salon dashboard
     setTimeout(() => {
       setIsLoading(false);
       if (role === 'customer') {
@@ -71,47 +71,156 @@ export default function LoginPage({ onNavigate, initialRole = 'customer' }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#F7FBFF] flex flex-col justify-between selection:bg-[#0EA5E9] selection:text-white">
-      {/* Top Header / Branding Bar */}
-      <header className="w-full bg-white/80 backdrop-blur-md border-b border-[#E2E8F0] sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
-          <a
-            href="/"
-            onClick={(e) => {
-              e.preventDefault();
-              if (onNavigate) onNavigate('/');
-            }}
-            className="flex items-center gap-2.5 group focus:outline-none"
-            title="Return to UPLOOKZ Home"
-          >
-            <div className="w-8 h-8 rounded-lg bg-[#0EA5E9] flex items-center justify-center text-white shadow-sm transition-transform group-hover:scale-105">
-              <span className="font-bold text-base tracking-tight">U</span>
-            </div>
-            <span className="text-xl font-bold tracking-tight text-[#111827]">
-              UPLOOKZ<span className="text-[#0EA5E9]">.</span>
-            </span>
-          </a>
+    <div className="relative min-h-screen w-full flex flex-col justify-between overflow-x-hidden selection:bg-[#0EA5E9] selection:text-white bg-[#0A0F1D]">
+      
+      {/* Scoped CSS animation for continuous, ultra-smooth background pan & zoom */}
+      <style>{`
+        @keyframes salonCinematicMotion {
+          0% {
+            transform: scale(1) translate3d(0, 0, 0);
+          }
+          50% {
+            transform: scale(1.05) translate3d(-1.2%, -0.8%, 0);
+          }
+          100% {
+            transform: scale(1) translate3d(0, 0, 0);
+          }
+        }
+        .salon-bg-animated {
+          animation: salonCinematicMotion 28s ease-in-out infinite;
+          will-change: transform;
+          backface-visibility: hidden;
+          -webkit-backface-visibility: hidden;
+        }
+      `}</style>
 
-          <a
-            href="/"
-            onClick={(e) => {
-              e.preventDefault();
-              if (onNavigate) onNavigate('/');
-            }}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-[#64748B] hover:text-[#0EA5E9] transition-colors py-1.5 px-3 rounded-lg hover:bg-[#F0F9FF]"
-          >
-            <ArrowLeft size={16} />
-            <span className="hidden sm:inline">Back to</span> Home
-          </a>
-        </div>
+      {/* FULL BACKGROUND AREA WITH CINEMATIC CONTINUOUS MOTION */}
+      <div className="fixed inset-0 w-full h-full pointer-events-none overflow-hidden z-0">
+        
+        {/* Salon Interior High-Quality Image with Fallback */}
+        <img
+          src={imgSrc}
+          onError={() => setImgSrc('/images/hero-1.jpg')}
+          alt="Luxury Salon Interior"
+          className="salon-bg-animated absolute -inset-[4%] w-[108%] h-[108%] object-cover object-center select-none"
+          loading="eager"
+          style={{ imageRendering: 'high-quality' }}
+        />
+
+        {/* Ambient Gradient Overlays for Readability & Mood */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-black/80 lg:from-black/75 lg:via-black/35 lg:to-[#070B12]/85" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#070B12]/90 via-transparent via-50% to-black/40" />
+
+        {/* Reference-Inspired Soft Blue Wave & Accent Flow */}
+        <svg
+          className="absolute inset-0 w-full h-full opacity-35 pointer-events-none mix-blend-screen"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 1440 900"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <defs>
+            <linearGradient id="waveGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.7" />
+              <stop offset="50%" stopColor="#0EA5E9" stopOpacity="0.4" />
+              <stop offset="100%" stopColor="#0284C7" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <path
+            d="M-50,220 C220,120 420,440 680,260 C920,90 1140,320 1500,180"
+            fill="none"
+            stroke="url(#waveGrad)"
+            strokeWidth="1.5"
+          />
+          <path
+            d="M-50,260 C240,160 440,480 710,290 C950,120 1160,350 1500,210"
+            fill="none"
+            stroke="url(#waveGrad)"
+            strokeWidth="1.2"
+          />
+          <path
+            d="M-50,300 C260,200 460,520 740,320 C980,150 1180,380 1500,240"
+            fill="none"
+            stroke="url(#waveGrad)"
+            strokeWidth="1"
+          />
+        </svg>
+
+        {/* Subtle luminous blue ambient glow on left */}
+        <div className="hidden lg:block absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-[#0EA5E9]/15 blur-3xl pointer-events-none" />
+      </div>
+
+      {/* TOP BAR / NAVIGATION */}
+      <header className="relative z-20 w-full px-5 sm:px-8 py-5 flex items-center justify-between">
+        <a
+          href="/"
+          onClick={(e) => {
+            e.preventDefault();
+            if (onNavigate) onNavigate('/');
+          }}
+          className="flex items-center gap-2.5 group focus:outline-none"
+          title="Return to UPLOOKZ Home"
+        >
+          <div className="w-8 h-8 rounded-lg bg-[#0EA5E9] flex items-center justify-center text-white shadow-md shadow-[#0EA5E9]/30 transition-transform group-hover:scale-105">
+            <span className="font-bold text-base tracking-tight">U</span>
+          </div>
+          <span className="text-xl font-bold tracking-tight text-white drop-shadow">
+            UPLOOKZ<span className="text-[#0EA5E9]">.</span>
+          </span>
+        </a>
+
+        <a
+          href="/"
+          onClick={(e) => {
+            e.preventDefault();
+            if (onNavigate) onNavigate('/');
+          }}
+          className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium text-white/80 hover:text-white bg-black/25 hover:bg-black/40 backdrop-blur-md border border-white/15 px-3.5 py-1.5 rounded-full transition-all"
+        >
+          <ArrowLeft size={15} />
+          <span>Back to Home</span>
+        </a>
       </header>
 
-      {/* Main Centered Login Section */}
-      <main className="flex-1 flex items-center justify-center px-4 sm:px-6 py-10 sm:py-16">
-        <div className="w-full max-w-[440px] mx-auto">
+      {/* MAIN SPLIT-SCREEN CONTENT CONTAINER */}
+      <main className="relative z-10 flex-1 flex flex-col lg:flex-row items-center justify-between max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 lg:py-12 gap-8 lg:gap-12">
+        
+        {/* LEFT AREA (Cinematic Salon Mood & Atmosphere Text for Desktop) */}
+        <div className="hidden lg:flex flex-col justify-center max-w-lg space-y-6 text-white py-8">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs font-semibold text-sky-200 w-fit">
+            <Sparkles size={14} className="text-[#38BDF8]" />
+            <span>Elevated Grooming Experience</span>
+          </div>
+
+          <h2 className="text-4xl xl:text-5xl font-bold tracking-tight text-white leading-[1.15] drop-shadow-md">
+            Upgrade Your Look.<br />
+            <span className="text-[#38BDF8]">Without Waiting.</span>
+          </h2>
+
+          <p className="text-base text-slate-200/90 leading-relaxed drop-shadow-sm max-w-md">
+            Step into verified premium salons with transparent pricing, unisex grooming, and effortless scheduling.
+          </p>
+
+          <div className="pt-4 grid grid-cols-3 gap-3 border-t border-white/15 text-xs text-slate-300">
+            <div>
+              <p className="font-bold text-white text-sm">4.9 ★</p>
+              <p className="text-slate-300/80 mt-0.5">Top-Rated Salons</p>
+            </div>
+            <div>
+              <p className="font-bold text-white text-sm">Instant</p>
+              <p className="text-slate-300/80 mt-0.5">Slot Confirmation</p>
+            </div>
+            <div>
+              <p className="font-bold text-white text-sm">Zero Wait</p>
+              <p className="text-slate-300/80 mt-0.5">Seamless Visits</p>
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT AREA: CLEAN PREMIUM WHITE LOGIN CARD */}
+        <div className="w-full max-w-[440px] mx-auto lg:mx-0 lg:ml-auto">
           
-          {/* Login Card */}
-          <div className="bg-white border border-[#E2E8F0] rounded-2xl shadow-clean-lg p-6 sm:p-9 space-y-6">
+          <div className="bg-white text-[#111827] border border-slate-100 rounded-2xl sm:rounded-3xl shadow-2xl shadow-black/40 p-6 sm:p-9 space-y-6">
             
             {/* Role Selection Tabs */}
             <div className="space-y-1.5">
@@ -119,7 +228,7 @@ export default function LoginPage({ onNavigate, initialRole = 'customer' }) {
                 Select Account Type
               </label>
               <div
-                className="grid grid-cols-2 p-1 bg-[#F1F5F9] rounded-xl border border-[#E2E8F0]/80"
+                className="grid grid-cols-2 p-1.5 bg-[#F1F5F9] rounded-xl border border-[#E2E8F0]"
                 role="tablist"
                 aria-label="Login role selection"
               >
@@ -155,7 +264,7 @@ export default function LoginPage({ onNavigate, initialRole = 'customer' }) {
             </div>
 
             {/* Header Content */}
-            <div className="space-y-1.5 text-left">
+            <div className="space-y-1 text-left">
               <h1 className="text-2xl sm:text-[1.75rem] font-bold tracking-tight text-[#111827] leading-tight">
                 Welcome Back
               </h1>
@@ -170,7 +279,7 @@ export default function LoginPage({ onNavigate, initialRole = 'customer' }) {
             {error && (
               <div
                 role="alert"
-                className="p-3.5 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 animate-in fade-in"
+                className="p-3.5 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2"
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-red-600 shrink-0" />
                 <span>{error}</span>
@@ -193,7 +302,7 @@ export default function LoginPage({ onNavigate, initialRole = 'customer' }) {
               </div>
             )}
 
-            {/* Form */}
+            {/* Login Form */}
             <form onSubmit={handleLoginSubmit} className="space-y-4" noValidate>
               
               {/* Email / Phone Field */}
@@ -288,7 +397,7 @@ export default function LoginPage({ onNavigate, initialRole = 'customer' }) {
                   type="submit"
                   id="login-submit-button"
                   disabled={isLoading}
-                  className="btn-lift w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-[#0EA5E9] hover:bg-[#0284C7] text-white font-semibold text-sm shadow-md shadow-[#0EA5E9]/20 transition-all duration-200 active:scale-[0.99] disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="btn-lift w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-[#0EA5E9] hover:bg-[#0284C7] text-white font-semibold text-sm shadow-md shadow-[#0EA5E9]/25 transition-all duration-200 active:scale-[0.99] disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                   {isLoading ? (
                     <span className="inline-flex items-center gap-2">
@@ -340,46 +449,20 @@ export default function LoginPage({ onNavigate, initialRole = 'customer' }) {
 
           </div>
 
-          {/* Trust footnote */}
-          <div className="mt-6 flex items-center justify-center gap-2 text-xs text-[#94A3B8]">
-            <ShieldCheck size={14} className="text-[#0EA5E9]" />
+          {/* Security footnote */}
+          <div className="mt-5 flex items-center justify-center gap-2 text-xs text-white/70 drop-shadow-sm">
+            <ShieldCheck size={14} className="text-[#38BDF8]" />
             <span>Secure SSL 256-bit encrypted authentication</span>
           </div>
 
         </div>
       </main>
 
-      {/* Simple Footer */}
-      <footer className="py-6 border-t border-[#E2E8F0] bg-white text-center text-xs text-[#94A3B8]">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p>© {new Date().getFullYear()} UPLOOKZ. All rights reserved.</p>
-          <div className="flex items-center gap-4 text-[#64748B]">
-            <a
-              href="/#about"
-              onClick={(e) => {
-                e.preventDefault();
-                if (onNavigate) onNavigate('/#about');
-              }}
-              className="hover:text-[#0EA5E9] transition-colors"
-            >
-              About
-            </a>
-            <span>•</span>
-            <a
-              href="/#for-salons"
-              onClick={(e) => {
-                e.preventDefault();
-                if (onNavigate) onNavigate('/#for-salons');
-              }}
-              className="hover:text-[#0EA5E9] transition-colors"
-            >
-              For Salons
-            </a>
-            <span>•</span>
-            <span className="text-[#94A3B8]">Privacy</span>
-          </div>
-        </div>
+      {/* FOOTER */}
+      <footer className="relative z-20 w-full py-4 px-5 text-center text-xs text-white/60">
+        <p>© {new Date().getFullYear()} UPLOOKZ. All rights reserved.</p>
       </footer>
+
     </div>
   );
 }
