@@ -7,10 +7,9 @@ import WhyUplookz from './components/WhyUplookz';
 import ForSalons from './components/ForSalons';
 import FinalCTA from './components/FinalCTA';
 import Footer from './components/Footer';
-import LoginPage from './components/LoginPage';
+import LoginModal from './components/LoginModal';
 import CustomerHome from './components/CustomerHome';
 import SalonDashboard from './components/SalonDashboard';
-import CustomerSignup from './components/CustomerSignup';
 import SalonRegister from './components/SalonRegister';
 import { CheckCircle2, X } from 'lucide-react';
 
@@ -19,10 +18,19 @@ export default function App() {
   const [currentPath, setCurrentPath] = useState(
     typeof window !== 'undefined' ? window.location.pathname : '/'
   );
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(
+    typeof window !== 'undefined' && (window.location.pathname === '/login' || window.location.pathname === '/signup')
+  );
 
   useEffect(() => {
     const handlePopState = () => {
-      setCurrentPath(window.location.pathname || '/');
+      const p = window.location.pathname || '/';
+      setCurrentPath(p);
+      if (p === '/login' || p === '/signup') {
+        setIsLoginModalOpen(true);
+      } else {
+        setIsLoginModalOpen(false);
+      }
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
@@ -31,8 +39,22 @@ export default function App() {
   const navigate = (path) => {
     if (typeof window !== 'undefined') {
       window.history.pushState(null, '', path);
-      setCurrentPath(path.split('?')[0]);
+      const normalized = path.split('?')[0];
+      setCurrentPath(normalized);
+      if (normalized === '/login' || normalized === '/signup') {
+        setIsLoginModalOpen(true);
+      } else {
+        setIsLoginModalOpen(false);
+      }
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleCloseLoginModal = () => {
+    setIsLoginModalOpen(false);
+    if (currentPath === '/login' || currentPath === '/signup') {
+      window.history.pushState(null, '', '/');
+      setCurrentPath('/');
     }
   };
 
@@ -42,7 +64,7 @@ export default function App() {
     }
 
     if (path.startsWith('#')) {
-      if (currentPath !== '/' && currentPath !== '/index.html') {
+      if (currentPath !== '/' && currentPath !== '/index.html' && currentPath !== '/login' && currentPath !== '/signup') {
         navigate('/');
         setTimeout(() => {
           const el = document.querySelector(path);
@@ -56,7 +78,16 @@ export default function App() {
     }
 
     const normalized = path.split('?')[0];
-    const knownRoutes = ['/', '/login', '/signup', '/salon/register', '/customer/home', '/customer/dashboard', '/salon/dashboard'];
+
+    // Trigger Login Popup for Login and Get Started flows
+    if (normalized === '/login' || normalized === '/signup') {
+      window.history.pushState(null, '', normalized);
+      setCurrentPath(normalized);
+      setIsLoginModalOpen(true);
+      return;
+    }
+
+    const knownRoutes = ['/', '/salon/register', '/customer/home', '/customer/dashboard', '/salon/dashboard'];
 
     if (knownRoutes.includes(normalized)) {
       navigate(path);
@@ -69,11 +100,6 @@ export default function App() {
     }
   };
 
-  // Route: Login Page
-  if (currentPath === '/login') {
-    return <LoginPage onNavigate={navigate} />;
-  }
-
   // Route: Customer Home / Dashboard
   if (currentPath === '/customer/home' || currentPath === '/customer/dashboard') {
     return <CustomerHome onNavigate={navigate} />;
@@ -84,19 +110,14 @@ export default function App() {
     return <SalonDashboard onNavigate={navigate} />;
   }
 
-  // Route: Customer Sign Up
-  if (currentPath === '/signup') {
-    return <CustomerSignup onNavigate={navigate} />;
-  }
-
   // Route: Salon Registration
   if (currentPath === '/salon/register') {
     return <SalonRegister onNavigate={navigate} />;
   }
 
-  // Default Route: Existing Landing Page (Exact untouched structure, navbar, sections, colors & text)
+  // Default Route: Existing Landing Page with Login Modal on top
   return (
-    <div className="min-h-screen bg-[#F7FBFF] text-[#111827] selection:bg-[#0EA5E9] selection:text-white">
+    <div className="min-h-screen bg-[#F7FBFF] text-[#111827] selection:bg-[#0EA5E9] selection:text-white relative">
       <Navbar onNavigate={handleNavigate} />
       <main>
         <Hero onNavigate={handleNavigate} />
@@ -107,6 +128,13 @@ export default function App() {
         <FinalCTA onNavigate={handleNavigate} />
       </main>
       <Footer onNavigate={handleNavigate} />
+
+      {/* Modern Centered Login Popup with subtle dark overlay */}
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={handleCloseLoginModal}
+        onNavigate={navigate}
+      />
 
       {toast && (
         <div className="fixed bottom-6 right-6 z-50 max-w-sm w-full bg-white border border-[#E2E8F0] text-[#111827] p-4 rounded-xl shadow-clean-lg">
@@ -130,4 +158,4 @@ export default function App() {
       )}
     </div>
   );
-}
+}

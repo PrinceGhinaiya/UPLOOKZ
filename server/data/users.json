@@ -1,0 +1,46 @@
+{
+  "+919876543210": {
+    "id": "usr_customer_01",
+    "phone": "+919876543210",
+    "name": "John Doe",
+    "email": "john@example.com",
+    "passwordHash": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+    "roles": [
+      "customer",
+      "salon"
+    ],
+    "activeRole": "salon",
+    "createdAt": "2026-01-10T10:00:00.000Z",
+    "isVerified": true
+  },
+  "+919876501234": {
+    "id": "usr_salon_02",
+    "phone": "+919876501234",
+    "name": "Rahul Sharma",
+    "salonName": "Apex Studio & Grooming",
+    "city": "Mumbai, Bandra West",
+    "email": "salon@example.com",
+    "passwordHash": "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+    "roles": [
+      "salon"
+    ],
+    "activeRole": "salon",
+    "createdAt": "2026-01-12T14:30:00.000Z",
+    "isVerified": true
+  },
+  "+919123456789": {
+    "id": "usr_1792086512172_tg46h",
+    "phone": "+919123456789",
+    "name": "Priya Patel",
+    "email": "",
+    "salonName": "",
+    "city": "",
+    "roles": [
+      "customer",
+      "salon"
+    ],
+    "activeRole": "salon",
+    "createdAt": "2026-10-15T17:48:32.172Z",
+    "isVerified": true
+  }
+}

@@ -1,7 +1,54 @@
-import React from 'react';
-import { Store, Users, Calendar, DollarSign, LogOut, Star, Clock, CheckCircle2, Plus } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Store, Users, Calendar, DollarSign, LogOut, Star, Clock, CheckCircle2, Plus, UserCheck } from 'lucide-react';
+import { authClient } from '../services/authClient';
 
 export default function SalonDashboard({ onNavigate }) {
+  const [currentUser, setCurrentUser] = useState(() => authClient.getStoredUser() || {
+    name: 'Rahul Sharma',
+    salonName: 'Apex Studio & Grooming',
+    phone: '+91 98765 01234',
+    roles: ['salon'],
+    activeRole: 'salon'
+  });
+
+  useEffect(() => {
+    authClient.fetchSession().then((u) => {
+      if (u) setCurrentUser(u);
+    });
+  }, []);
+
+  const handleLogout = async () => {
+    await authClient.logout();
+    if (onNavigate) {
+      onNavigate('/');
+    } else {
+      window.location.href = '/';
+    }
+  };
+
+  const handleSwitchToCustomer = async () => {
+    try {
+      const res = await authClient.switchRole('customer');
+      if (res.user) setCurrentUser(res.user);
+      if (onNavigate) {
+        onNavigate('/customer/home');
+      } else {
+        window.location.href = '/customer/home';
+      }
+    } catch {
+      if (onNavigate) onNavigate('/customer/home');
+    }
+  };
+
+  const displaySalonName = currentUser?.salonName || 'Apex Studio & Grooming';
+  const displayOwnerName = currentUser?.name || 'Salon Partner';
+  const displayInitials = (currentUser?.salonName || currentUser?.name || 'AS')
+    .split(' ')
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+
   return (
     <div className="min-h-screen bg-[#F7FBFF] flex flex-col justify-between selection:bg-[#0EA5E9] selection:text-white">
       {/* Top Header */}
@@ -29,18 +76,28 @@ export default function SalonDashboard({ onNavigate }) {
           </div>
 
           <div className="flex items-center gap-3 sm:gap-4">
+            {/* Seamless Mode Switcher (Salon Owner <-> Customer without logging out) */}
+            <button
+              onClick={handleSwitchToCustomer}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0EA5E9] bg-[#F0F9FF] hover:bg-[#E0F2FE] border border-[#BAE6FD] px-3 py-1.5 rounded-lg transition-all"
+              title="Switch to Customer Mode"
+            >
+              <UserCheck size={14} />
+              <span className="hidden sm:inline">Switch to</span> Customer Mode
+            </button>
+
             <div className="flex items-center gap-2.5 pl-3 border-l border-[#E2E8F0]">
               <div className="w-8 h-8 rounded-xl bg-[#E0F2FE] text-[#0284C7] flex items-center justify-center font-bold text-xs">
-                AS
+                {displayInitials}
               </div>
               <div className="hidden md:block text-left">
-                <p className="text-xs font-semibold text-[#111827]">Apex Studio</p>
-                <p className="text-[11px] text-[#64748B]">Salon Owner</p>
+                <p className="text-xs font-semibold text-[#111827]">{displaySalonName}</p>
+                <p className="text-[11px] text-[#64748B]">{displayOwnerName} • Partner</p>
               </div>
             </div>
 
             <button
-              onClick={() => onNavigate && onNavigate('/login?role=salon')}
+              onClick={handleLogout}
               className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-[#64748B] hover:text-red-600 transition-colors py-1.5 px-3 rounded-lg hover:bg-red-50 border border-transparent hover:border-red-100"
             >
               <LogOut size={15} />
@@ -61,10 +118,10 @@ export default function SalonDashboard({ onNavigate }) {
               Storefront Online • Accepting Bookings
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#111827]">
-              Apex Studio & Grooming Dashboard
+              {displaySalonName} Dashboard
             </h1>
             <p className="text-sm sm:text-base text-[#64748B]">
-              Manage today's schedule, staff allocations, and client service requests.
+              Welcome back, {displayOwnerName}. Manage today's schedule, staff allocations, and client service requests.
             </p>
           </div>
 

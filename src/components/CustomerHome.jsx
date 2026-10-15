@@ -1,7 +1,53 @@
-import React from 'react';
-import { Calendar, Search, Clock, MapPin, User, LogOut, ArrowRight, Star, Scissors } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Calendar, Search, Clock, MapPin, User, LogOut, ArrowRight, Star, Scissors, Store, RefreshCw } from 'lucide-react';
+import { authClient } from '../services/authClient';
 
 export default function CustomerHome({ onNavigate }) {
+  const [currentUser, setCurrentUser] = useState(() => authClient.getStoredUser() || {
+    name: 'John Doe',
+    phone: '+91 98765 43210',
+    roles: ['customer', 'salon'],
+    activeRole: 'customer'
+  });
+
+  useEffect(() => {
+    // Sync active session if available
+    authClient.fetchSession().then((u) => {
+      if (u) setCurrentUser(u);
+    });
+  }, []);
+
+  const handleLogout = async () => {
+    await authClient.logout();
+    if (onNavigate) {
+      onNavigate('/');
+    } else {
+      window.location.href = '/';
+    }
+  };
+
+  const handleSwitchToSalon = async () => {
+    try {
+      const res = await authClient.switchRole('salon');
+      if (res.user) setCurrentUser(res.user);
+      if (onNavigate) {
+        onNavigate('/salon/dashboard');
+      } else {
+        window.location.href = '/salon/dashboard';
+      }
+    } catch {
+      if (onNavigate) onNavigate('/salon/dashboard');
+    }
+  };
+
+  const displayName = currentUser?.name || 'Customer';
+  const displayInitials = displayName
+    .split(' ')
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase() || 'U';
+
   return (
     <div className="min-h-screen bg-[#F7FBFF] flex flex-col justify-between selection:bg-[#0EA5E9] selection:text-white">
       {/* Top Header */}
@@ -29,18 +75,28 @@ export default function CustomerHome({ onNavigate }) {
           </div>
 
           <div className="flex items-center gap-3 sm:gap-4">
+            {/* Seamless Mode Switcher (Customer <-> Salon Owner without logging out) */}
+            <button
+              onClick={handleSwitchToSalon}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0EA5E9] bg-[#F0F9FF] hover:bg-[#E0F2FE] border border-[#BAE6FD] px-3 py-1.5 rounded-lg transition-all"
+              title="Switch to Salon Partner Dashboard"
+            >
+              <Store size={14} />
+              <span className="hidden sm:inline">Switch to</span> Salon Mode
+            </button>
+
             <div className="flex items-center gap-2.5 pl-3 border-l border-[#E2E8F0]">
               <div className="w-8 h-8 rounded-full bg-[#E0F2FE] text-[#0284C7] flex items-center justify-center font-bold text-xs">
-                JD
+                {displayInitials}
               </div>
               <div className="hidden md:block text-left">
-                <p className="text-xs font-semibold text-[#111827]">John Doe</p>
-                <p className="text-[11px] text-[#64748B]">Customer</p>
+                <p className="text-xs font-semibold text-[#111827]">{displayName}</p>
+                <p className="text-[11px] text-[#64748B]">{currentUser?.phone || 'Customer'}</p>
               </div>
             </div>
 
             <button
-              onClick={() => onNavigate && onNavigate('/login')}
+              onClick={handleLogout}
               className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-[#64748B] hover:text-red-600 transition-colors py-1.5 px-3 rounded-lg hover:bg-red-50 border border-transparent hover:border-red-100"
             >
               <LogOut size={15} />
@@ -58,13 +114,13 @@ export default function CustomerHome({ onNavigate }) {
           <div className="space-y-2 max-w-xl">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0]">
               <span className="w-2 h-2 rounded-full bg-[#16A34A] animate-pulse" />
-              Logged In as Customer
+              Verified Account • Logged in as Customer
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#111827]">
-              Welcome Back, John!
+              Welcome Back, {displayName.split(' ')[0]}!
             </h1>
             <p className="text-sm sm:text-base text-[#64748B]">
-              Ready for your next look? Discover verified premium salons and book your slot in seconds.
+              Ready for your next look? Discover verified premium salons and plan your grooming visit with ease.
             </p>
           </div>
 
