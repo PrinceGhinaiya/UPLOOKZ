@@ -117,10 +117,10 @@ export default function Hero({ onNavigate }) {
 
             <a
               href="/signup"
-              onClick={(e) => onNavigate(e, '/signup', 'Signup / Get Started flow')}
+              onClick={(e) => onNavigate(e, '/signup', 'Create Account flow')}
               className="inline-flex items-center justify-center px-7 py-3.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-medium text-[15px] border border-white/25 backdrop-blur-md transition-all duration-300"
             >
-              Get Started
+              Create Account
             </a>
           </div>
 

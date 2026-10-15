@@ -14,6 +14,7 @@ import {
   Mail,
   Loader2,
   Sparkles,
+  UserCheck,
 } from 'lucide-react';
 import { authClient } from '../services/authClient';
 
@@ -26,7 +27,10 @@ const COUNTRY_CODES = [
 ];
 
 export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 'login' }) {
-  // Screens: 'phone' | 'otp' | 'choose_role' | 'password'
+  // Mode: 'login' | 'signup'
+  const [authMode, setAuthMode] = useState(initialMode);
+
+  // Screens: 'phone' | 'otp' | 'choose_role' | 'existing_account' | 'password'
   const [screen, setScreen] = useState('phone');
 
   // Form states
@@ -43,6 +47,9 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
   const [city, setCity] = useState('');
   const [email, setEmail] = useState('');
 
+  // Existing account detected during signup
+  const [existingUser, setExistingUser] = useState(null);
+
   // Password login states (preserving legacy email/password)
   const [emailOrPhone, setEmailOrPhone] = useState('');
   const [password, setPassword] = useState('');
@@ -57,29 +64,33 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
   const otpInputRefs = useRef([]);
   const phoneInputRef = useRef(null);
 
-  // Prevent background scrolling when modal is open
+  // Sync mode and reset state on open/close
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
-      // Focus phone input
+      setAuthMode(initialMode || 'login');
+      setScreen('phone');
+      setExistingUser(null);
+      setErrorMessage('');
+      setSuccessNotice('');
       setTimeout(() => {
         phoneInputRef.current?.focus();
       }, 100);
     } else {
       document.body.style.overflow = '';
-      // Reset state when closed
       setScreen('phone');
       setPhone('');
       setOtpValues(['', '', '', '', '', '']);
       setErrorMessage('');
       setSuccessNotice('');
       setDevCodeHint(null);
+      setExistingUser(null);
       setIsLoading(false);
     }
     return () => {
       document.body.style.overflow = '';
     };
-  }, [isOpen]);
+  }, [isOpen, initialMode]);
 
   // Handle escape key
   useEffect(() => {
@@ -152,7 +163,6 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
       if (data.devHint) {
         setDevCodeHint(data.devHint);
       }
-      // Focus first OTP input
       setTimeout(() => {
         otpInputRefs.current[0]?.focus();
       }, 150);
@@ -253,8 +263,15 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
         // New user: guide them through account type selection
         setScreen('choose_role');
       } else {
-        // Existing user: direct route based on saved role
-        handlePostAuthRouting(data.user);
+        // Existing user verified:
+        if (authMode === 'signup') {
+          // In signup mode, inform user that account already exists and offer 1-click sign-in
+          setExistingUser(data.user);
+          setScreen('existing_account');
+        } else {
+          // Standard login: directly route
+          handlePostAuthRouting(data.user);
+        }
       }
     } catch (err) {
       setIsLoading(false);
@@ -272,7 +289,7 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
     }
 
     if (selectedRole === 'salon' && (!salonName.trim() || !fullName.trim())) {
-      setErrorMessage('Please enter your salon name and your name.');
+      setErrorMessage('Please enter your salon name and owner name.');
       return;
     }
 
@@ -361,13 +378,13 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
           <button
             onClick={onClose}
             className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-[#64748B] hover:text-[#111827] flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-[#0EA5E9]"
-            aria-label="Close login popup"
+            aria-label="Close popup"
           >
             <X size={18} />
           </button>
         </div>
 
-        {/* BACK BUTTON (When in OTP, Role, or Password screen) */}
+        {/* BACK BUTTON (When in OTP, Role, Existing, or Password screen) */}
         {screen !== 'phone' && (
           <div className="absolute top-4 left-4 z-20">
             <button
@@ -375,6 +392,7 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
                 setScreen('phone');
                 setErrorMessage('');
                 setSuccessNotice('');
+                setExistingUser(null);
               }}
               className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-[#64748B] hover:text-[#111827] flex items-center justify-center transition-colors focus:outline-none"
               aria-label="Back to phone number"
@@ -388,7 +406,7 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
         <div className="p-6 sm:p-8 pt-8 sm:pt-9 space-y-6">
 
           {/* ---------------------------------------------------- */}
-          {/* SCREEN 1: PHONE NUMBER INPUT (PRIMARY FLOW)           */}
+          {/* SCREEN 1: PHONE NUMBER INPUT                         */}
           {/* ---------------------------------------------------- */}
           {screen === 'phone' && (
             <div className="space-y-6">
@@ -409,10 +427,12 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
                     id="modal-headline"
                     className="text-2xl sm:text-[1.65rem] font-bold tracking-tight text-[#111827] leading-tight"
                   >
-                    Welcome to UPLOOKZ
+                    {authMode === 'signup' ? 'Create Your UPLOOKZ Account' : 'Welcome to UPLOOKZ'}
                   </h2>
                   <p className="text-sm text-[#64748B] mt-1">
-                    Enter your mobile number to continue
+                    {authMode === 'signup'
+                      ? 'Enter your mobile number to get started with verified grooming'
+                      : 'Enter your mobile number to continue'}
                   </p>
                 </div>
               </div>
@@ -421,7 +441,7 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
               {errorMessage && (
                 <div
                   role="alert"
-                  className="p-3 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 animate-shake"
+                  className="p-3 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2"
                 >
                   <AlertCircle size={15} className="shrink-0 text-red-600" />
                   <span>{errorMessage}</span>
@@ -496,7 +516,7 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
                   </div>
                 </div>
 
-                {/* Primary Button: Send Verification Code */}
+                {/* Primary Button */}
                 <button
                   type="submit"
                   id="btn-send-verification-code"
@@ -529,15 +549,46 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
                 </a>.
               </p>
 
-              {/* Alternative Login: Email / Password */}
-              <div className="pt-2 border-t border-[#E2E8F0] text-center">
+              {/* Mode Switcher: Login <-> Create Account */}
+              <div className="pt-2 border-t border-[#E2E8F0] flex flex-col items-center gap-2 text-center text-xs text-[#64748B]">
+                {authMode === 'signup' ? (
+                  <p>
+                    Already have an account?{' '}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAuthMode('login');
+                        setErrorMessage('');
+                      }}
+                      className="font-semibold text-[#0EA5E9] hover:underline"
+                    >
+                      Log in
+                    </button>
+                  </p>
+                ) : (
+                  <p>
+                    Don't have an account?{' '}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAuthMode('signup');
+                        setErrorMessage('');
+                      }}
+                      className="font-semibold text-[#0EA5E9] hover:underline"
+                    >
+                      Create an account
+                    </button>
+                  </p>
+                )}
+
+                {/* Legacy Password Option */}
                 <button
                   type="button"
                   onClick={() => {
                     setScreen('password');
                     setErrorMessage('');
                   }}
-                  className="text-xs font-semibold text-[#64748B] hover:text-[#0EA5E9] transition-colors"
+                  className="text-[11px] text-[#94A3B8] hover:text-[#0EA5E9] transition-colors"
                 >
                   Or sign in with Password / Email
                 </button>
@@ -575,7 +626,7 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
                 </div>
               </div>
 
-              {/* Success / Error Alerts */}
+              {/* Error Alert */}
               {errorMessage && (
                 <div
                   role="alert"
@@ -586,7 +637,7 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
                 </div>
               )}
 
-              {/* Dev mode helper badge (active in local dev environment when SMS API keys are not set) */}
+              {/* Dev mode helper badge */}
               {devCodeHint && (
                 <div className="p-3 bg-[#F0FDF4] border border-[#BBF7D0] rounded-xl text-xs text-[#16A34A] space-y-1">
                   <p className="font-semibold flex items-center gap-1.5">
@@ -674,7 +725,59 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
           )}
 
           {/* ---------------------------------------------------- */}
-          {/* SCREEN 3: ACCOUNT TYPE SELECTION & ONBOARDING        */}
+          {/* SCREEN 3: ACCOUNT ALREADY EXISTS NOTICE (SIGNUP FLOW) */}
+          {/* ---------------------------------------------------- */}
+          {screen === 'existing_account' && existingUser && (
+            <div className="space-y-6 text-center pt-2">
+              <div className="w-14 h-14 rounded-2xl bg-[#F0FDF4] border border-[#BBF7D0] text-[#16A34A] flex items-center justify-center mx-auto shadow-sm">
+                <UserCheck size={28} />
+              </div>
+
+              <div className="space-y-1.5">
+                <h2 className="text-2xl font-bold tracking-tight text-[#111827]">
+                  Account Already Exists!
+                </h2>
+                <p className="text-sm text-[#64748B] max-w-xs mx-auto">
+                  An account for <strong className="text-[#111827]">{selectedCountry.code} {phone}</strong> is already registered to <strong className="text-[#111827]">{existingUser.name}</strong>.
+                </p>
+              </div>
+
+              <div className="p-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl text-left space-y-1">
+                <p className="text-xs text-[#64748B]">Saved Account Details</p>
+                <p className="text-sm font-semibold text-[#111827]">{existingUser.name}</p>
+                <p className="text-xs text-[#0EA5E9] font-medium capitalize">
+                  {existingUser.activeRole === 'salon' ? 'Salon Partner' : 'Customer'} Account
+                </p>
+              </div>
+
+              <div className="space-y-2.5">
+                <button
+                  type="button"
+                  onClick={() => handlePostAuthRouting(existingUser)}
+                  className="btn-lift w-full h-12 inline-flex items-center justify-center gap-2 px-5 rounded-xl bg-[#0EA5E9] hover:bg-[#0284C7] text-white font-semibold text-sm shadow-md shadow-[#0EA5E9]/25 transition-all"
+                >
+                  <span>Continue to Your Dashboard</span>
+                  <ArrowRight size={16} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setScreen('phone');
+                    setPhone('');
+                    setOtpValues(['', '', '', '', '', '']);
+                    setExistingUser(null);
+                  }}
+                  className="w-full py-2 text-xs font-semibold text-[#64748B] hover:text-[#111827] transition-colors"
+                >
+                  Use another mobile number
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ---------------------------------------------------- */}
+          {/* SCREEN 4: NEW USER REGISTRATION & ROLE ONBOARDING    */}
           {/* ---------------------------------------------------- */}
           {screen === 'choose_role' && (
             <div className="space-y-6">
@@ -685,10 +788,10 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
                   Phone Verified
                 </div>
                 <h2 className="text-2xl font-bold tracking-tight text-[#111827]">
-                  Welcome to UPLOOKZ
+                  Create Your Account
                 </h2>
                 <p className="text-sm text-[#64748B]">
-                  Choose how you'd like to use UPLOOKZ
+                  Choose how you plan to use UPLOOKZ
                 </p>
               </div>
 
@@ -717,7 +820,7 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
                   <div>
                     <p className="text-sm font-bold text-[#111827]">Customer</p>
                     <p className="text-[11px] text-[#64748B] mt-0.5 leading-tight">
-                      Book salon visits without waiting
+                      Book appointments without waiting
                     </p>
                   </div>
                 </button>
@@ -739,7 +842,7 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
                   <div>
                     <p className="text-sm font-bold text-[#111827]">Salon Partner</p>
                     <p className="text-[11px] text-[#64748B] mt-0.5 leading-tight">
-                      Manage salon & bookings
+                      List salon & manage bookings
                     </p>
                   </div>
                 </button>
@@ -798,7 +901,7 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
                     </span>
                   ) : (
                     <>
-                      <span>Get Started</span>
+                      <span>Complete Registration</span>
                       <ArrowRight size={16} />
                     </>
                   )}
@@ -809,7 +912,7 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
           )}
 
           {/* ---------------------------------------------------- */}
-          {/* SCREEN 4: LEGACY PASSWORD LOGIN SCREEN               */}
+          {/* SCREEN 5: LEGACY PASSWORD LOGIN SCREEN               */}
           {/* ---------------------------------------------------- */}
           {screen === 'password' && (
             <div className="space-y-6">

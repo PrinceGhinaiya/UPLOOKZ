@@ -31,10 +31,10 @@ export default function FinalCTA({ onNavigate }) {
         <div className="pt-4">
           <a
             href="/signup"
-            onClick={(e) => onNavigate(e, '/signup', 'Signup / Get Started flow')}
+            onClick={(e) => onNavigate(e, '/signup', 'Create Account flow')}
             className="btn-lift inline-flex items-center gap-2.5 px-8 py-4 rounded-lg bg-[#0EA5E9] hover:bg-[#0284C7] text-white font-semibold text-base shadow-xl shadow-[#0EA5E9]/25 transition-all duration-300"
           >
-            <span>Get Started</span>
+            <span>Create Account</span>
             <ArrowRight size={18} />
           </a>
         </div>

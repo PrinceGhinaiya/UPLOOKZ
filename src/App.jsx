@@ -18,6 +18,9 @@ export default function App() {
   const [currentPath, setCurrentPath] = useState(
     typeof window !== 'undefined' ? window.location.pathname : '/'
   );
+  const [modalMode, setModalMode] = useState(
+    typeof window !== 'undefined' && window.location.pathname === '/signup' ? 'signup' : 'login'
+  );
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(
     typeof window !== 'undefined' && (window.location.pathname === '/login' || window.location.pathname === '/signup')
   );
@@ -26,7 +29,11 @@ export default function App() {
     const handlePopState = () => {
       const p = window.location.pathname || '/';
       setCurrentPath(p);
-      if (p === '/login' || p === '/signup') {
+      if (p === '/signup') {
+        setModalMode('signup');
+        setIsLoginModalOpen(true);
+      } else if (p === '/login') {
+        setModalMode('login');
         setIsLoginModalOpen(true);
       } else {
         setIsLoginModalOpen(false);
@@ -41,7 +48,11 @@ export default function App() {
       window.history.pushState(null, '', path);
       const normalized = path.split('?')[0];
       setCurrentPath(normalized);
-      if (normalized === '/login' || normalized === '/signup') {
+      if (normalized === '/signup') {
+        setModalMode('signup');
+        setIsLoginModalOpen(true);
+      } else if (normalized === '/login') {
+        setModalMode('login');
         setIsLoginModalOpen(true);
       } else {
         setIsLoginModalOpen(false);
@@ -79,10 +90,19 @@ export default function App() {
 
     const normalized = path.split('?')[0];
 
-    // Trigger Login Popup for Login and Get Started flows
-    if (normalized === '/login' || normalized === '/signup') {
+    // Trigger Login/Signup Popup
+    if (normalized === '/signup') {
       window.history.pushState(null, '', normalized);
       setCurrentPath(normalized);
+      setModalMode('signup');
+      setIsLoginModalOpen(true);
+      return;
+    }
+
+    if (normalized === '/login') {
+      window.history.pushState(null, '', normalized);
+      setCurrentPath(normalized);
+      setModalMode('login');
       setIsLoginModalOpen(true);
       return;
     }
@@ -115,7 +135,7 @@ export default function App() {
     return <SalonRegister onNavigate={navigate} />;
   }
 
-  // Default Route: Existing Landing Page with Login Modal on top
+  // Default Route: Existing Landing Page with Login/Signup Modal on top
   return (
     <div className="min-h-screen bg-[#F7FBFF] text-[#111827] selection:bg-[#0EA5E9] selection:text-white relative">
       <Navbar onNavigate={handleNavigate} />
@@ -129,9 +149,10 @@ export default function App() {
       </main>
       <Footer onNavigate={handleNavigate} />
 
-      {/* Modern Centered Login Popup with subtle dark overlay */}
+      {/* Modern Centered Login / Account Creation Popup with subtle dark overlay */}
       <LoginModal
         isOpen={isLoginModalOpen}
+        initialMode={modalMode}
         onClose={handleCloseLoginModal}
         onNavigate={navigate}
       />

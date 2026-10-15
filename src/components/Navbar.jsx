@@ -71,10 +71,10 @@ export default function Navbar({ onNavigate }) {
           </a>
           <a
             href="/signup"
-            onClick={(e) => onNavigate(e, '/signup', 'Signup / Get Started flow')}
+            onClick={(e) => onNavigate(e, '/signup', 'Create Account flow')}
             className="inline-flex items-center gap-1.5 text-[14px] font-semibold bg-[#0EA5E9] hover:bg-[#0284C7] text-white px-5 py-2.5 rounded-lg transition-all duration-200 shadow-sm hover:shadow active:scale-95"
           >
-            <span>Get Started</span>
+            <span>Create Account</span>
             <ArrowRight size={15} />
           </a>
         </div>
@@ -118,10 +118,10 @@ export default function Navbar({ onNavigate }) {
             </a>
             <a
               href="/signup"
-              onClick={(e) => { setMobileMenuOpen(false); onNavigate(e, '/signup', 'Signup / Get Started flow'); }}
+              onClick={(e) => { setMobileMenuOpen(false); onNavigate(e, '/signup', 'Create Account flow'); }}
               className="w-full text-center py-2.5 text-[14px] font-semibold bg-[#0EA5E9] hover:bg-[#0284C7] text-white rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-sm"
             >
-              <span>Get Started</span>
+              <span>Create Account</span>
               <ArrowRight size={15} />
             </a>
           </div>
