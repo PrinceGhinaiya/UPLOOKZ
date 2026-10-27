@@ -3,88 +3,103 @@ import {
   X,
   ArrowRight,
   ArrowLeft,
-  ChevronDown,
+  Mail,
   ShieldCheck,
   CheckCircle2,
   AlertCircle,
-  Scissors,
-  Store,
   User,
-  Lock,
-  Mail,
+  Store,
   Loader2,
-  Sparkles,
-  UserCheck,
+  Info,
 } from 'lucide-react';
 import { authClient } from '../services/authClient';
 
-const COUNTRY_CODES = [
-  { code: '+91', country: 'India', flag: '🇮🇳', placeholder: '98765 43210' },
-  { code: '+1', country: 'United States', flag: '🇺🇸', placeholder: '202 555 0123' },
-  { code: '+44', country: 'United Kingdom', flag: '🇬🇧', placeholder: '7911 123456' },
-  { code: '+971', country: 'UAE', flag: '🇦🇪', placeholder: '50 123 4567' },
-  { code: '+65', country: 'Singapore', flag: '🇸🇬', placeholder: '8123 4567' },
-];
+/**
+ * Modern Google 'G' multicolor SVG logo
+ */
+function GoogleLogo({ className = 'w-5 h-5' }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="#4285F4"
+        d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
+      />
+    </svg>
+  );
+}
 
 export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 'login' }) {
-  // Mode: 'login' | 'signup'
+  // Screens: 'initial' | 'otp' | 'choose_role'
+  const [screen, setScreen] = useState('initial');
   const [authMode, setAuthMode] = useState(initialMode);
 
-  // Screens: 'phone' | 'otp' | 'choose_role' | 'existing_account' | 'password'
-  const [screen, setScreen] = useState('phone');
-
-  // Form states
-  const [selectedCountry, setSelectedCountry] = useState(COUNTRY_CODES[0]);
-  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
-  const [phone, setPhone] = useState('');
+  // Email OTP state
+  const [email, setEmail] = useState('');
   const [otpValues, setOtpValues] = useState(['', '', '', '', '', '']);
   const [resendCountdown, setResendCountdown] = useState(0);
 
-  // Registration states (for new users)
+  // New user onboarding state
   const [selectedRole, setSelectedRole] = useState('customer'); // 'customer' | 'salon'
   const [fullName, setFullName] = useState('');
   const [salonName, setSalonName] = useState('');
   const [city, setCity] = useState('');
-  const [email, setEmail] = useState('');
-
-  // Existing account detected during signup
-  const [existingUser, setExistingUser] = useState(null);
-
-  // Password login states (preserving legacy email/password)
-  const [emailOrPhone, setEmailOrPhone] = useState('');
-  const [password, setPassword] = useState('');
 
   // UI state
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successNotice, setSuccessNotice] = useState('');
   const [devCodeHint, setDevCodeHint] = useState(null);
+  const [emailProvider, setEmailProvider] = useState(null);
 
   // References
   const otpInputRefs = useRef([]);
-  const phoneInputRef = useRef(null);
+  const emailInputRef = useRef(null);
 
-  // Sync mode and reset state on open/close
+  // Load Google Identity Services SDK script dynamically
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (document.getElementById('google-gsi-client')) return;
+
+    const script = document.createElement('script');
+    script.id = 'google-gsi-client';
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+  }, []);
+
+  // Reset modal state on open/close
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
       setAuthMode(initialMode || 'login');
-      setScreen('phone');
-      setExistingUser(null);
+      setScreen('initial');
       setErrorMessage('');
       setSuccessNotice('');
       setTimeout(() => {
-        phoneInputRef.current?.focus();
+        emailInputRef.current?.focus();
       }, 100);
     } else {
       document.body.style.overflow = '';
-      setScreen('phone');
-      setPhone('');
+      setScreen('initial');
+      setEmail('');
       setOtpValues(['', '', '', '', '', '']);
       setErrorMessage('');
       setSuccessNotice('');
       setDevCodeHint(null);
-      setExistingUser(null);
+      setEmailProvider(null);
       setIsLoading(false);
     }
     return () => {
@@ -117,49 +132,120 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
   if (!isOpen) return null;
 
   // ----------------------------------------------------
-  // Handlers
+  // Post-Auth Routing Helper
   // ----------------------------------------------------
-
-  const handlePhoneChange = (e) => {
-    const val = e.target.value.replace(/\D/g, '');
-    if (selectedCountry.code === '+91') {
-      if (val.length <= 10) setPhone(val);
+  const handlePostAuthRouting = (user) => {
+    onClose();
+    const activeRole = user?.activeRole || 'customer';
+    if (activeRole === 'salon' || (user?.roles && user.roles.includes('salon') && !user.roles.includes('customer'))) {
+      if (onNavigate) {
+        onNavigate('/salon/dashboard');
+      } else {
+        window.location.href = '/salon/dashboard';
+      }
     } else {
-      if (val.length <= 15) setPhone(val);
+      if (onNavigate) {
+        onNavigate('/customer/home');
+      } else {
+        window.location.href = '/customer/home';
+      }
     }
-    setErrorMessage('');
   };
 
-  const handleSendOtp = async (e) => {
+  // ----------------------------------------------------
+  // Live Google OAuth Trigger
+  // ----------------------------------------------------
+  const handleGoogleSignInClick = () => {
+    setErrorMessage('');
+    const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+    if (!googleClientId || googleClientId === 'your_google_client_id_here') {
+      setErrorMessage(
+        'Google Client ID required: Please add your VITE_GOOGLE_CLIENT_ID in the .env file to enable live Google authentication.'
+      );
+      return;
+    }
+
+    if (window.google?.accounts?.oauth2) {
+      try {
+        const client = window.google.accounts.oauth2.initTokenClient({
+          client_id: googleClientId,
+          scope: 'email profile openid',
+          callback: async (tokenResponse) => {
+            if (tokenResponse.error) {
+              setErrorMessage(tokenResponse.error_description || 'Google sign-in was canceled.');
+              return;
+            }
+            setIsLoading(true);
+            try {
+              const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+              });
+              const profile = await res.json();
+              const data = await authClient.loginWithGoogle({
+                email: profile.email,
+                name: profile.name,
+                picture: profile.picture,
+                sub: profile.sub,
+              });
+              setIsLoading(false);
+              handlePostAuthRouting(data.user);
+            } catch (err) {
+              setIsLoading(false);
+              setErrorMessage(err.message || 'Google authentication failed.');
+            }
+          },
+        });
+        client.requestAccessToken();
+        return;
+      } catch (err) {
+        console.error('[UPLOOKZ AUTH] Token client error:', err);
+      }
+    }
+
+    // If GIS script hasn't loaded yet
+    if (window.google?.accounts?.id) {
+      window.google.accounts.id.prompt();
+    } else {
+      setErrorMessage('Google Identity Services is loading. Please try again in a few seconds.');
+    }
+  };
+
+  // ----------------------------------------------------
+  // Email OTP Handlers
+  // ----------------------------------------------------
+  const handleSendEmailOtp = async (e) => {
     if (e) e.preventDefault();
     setErrorMessage('');
     setSuccessNotice('');
 
-    // Validation
-    if (!phone.trim()) {
-      setErrorMessage('Please enter your mobile number.');
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail) {
+      setErrorMessage('Please enter your email address.');
       return;
     }
 
-    if (selectedCountry.code === '+91') {
-      if (phone.length !== 10) {
-        setErrorMessage('Please enter a valid 10-digit mobile number.');
-        return;
-      }
-      if (!/^[6-9]/.test(phone)) {
-        setErrorMessage('Mobile number must begin with 6, 7, 8, or 9.');
-        return;
-      }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(cleanEmail)) {
+      setErrorMessage('Please enter a valid email address (e.g. name@example.com).');
+      return;
     }
 
     setIsLoading(true);
 
     try {
-      const data = await authClient.sendOtp(phone, selectedCountry.code);
+      const data = await authClient.sendEmailOtp(cleanEmail);
       setIsLoading(false);
       setScreen('otp');
       setResendCountdown(data.cooldownSeconds || 30);
-      setSuccessNotice(`Verification code sent to ${selectedCountry.code} ${phone}`);
+      setEmailProvider(data.provider);
+
+      if (data.provider === 'smtp' || data.provider === 'resend') {
+        setSuccessNotice(`Verification code sent directly to your inbox at ${cleanEmail}!`);
+      } else {
+        setSuccessNotice(`Verification code generated for ${cleanEmail}.`);
+      }
+
       if (data.devHint) {
         setDevCodeHint(data.devHint);
       }
@@ -172,17 +258,18 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
     }
   };
 
-  const handleResendOtp = async () => {
+  const handleResendEmailOtp = async () => {
     if (resendCountdown > 0 || isLoading) return;
     setErrorMessage('');
     setSuccessNotice('');
     setIsLoading(true);
 
     try {
-      const data = await authClient.sendOtp(phone, selectedCountry.code);
+      const data = await authClient.sendEmailOtp(email.trim().toLowerCase());
       setIsLoading(false);
       setResendCountdown(data.cooldownSeconds || 30);
-      setSuccessNotice('A fresh verification code has been sent!');
+      setEmailProvider(data.provider);
+      setSuccessNotice('A fresh verification code has been dispatched to your email!');
       if (data.devHint) {
         setDevCodeHint(data.devHint);
       }
@@ -201,12 +288,12 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
     setOtpValues(updated);
     setErrorMessage('');
 
-    // Advance to next input
+    // Advance to next box
     if (cleanDigit && index < 5) {
       otpInputRefs.current[index + 1]?.focus();
     }
 
-    // Auto verify if all 6 filled
+    // Auto-verify if all 6 filled
     if (cleanDigit && index === 5 && updated.every((d) => d.length === 1)) {
       triggerVerifyOtp(updated.join(''));
     }
@@ -256,26 +343,18 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
     setIsLoading(true);
 
     try {
-      const data = await authClient.verifyOtp(phone, selectedCountry.code, otp);
+      const data = await authClient.verifyEmailOtp(email.trim().toLowerCase(), otp);
       setIsLoading(false);
 
       if (data.isNewUser) {
-        // New user: guide them through account type selection
+        // Guide new user through role and name completion
         setScreen('choose_role');
       } else {
-        // Existing user verified:
-        if (authMode === 'signup') {
-          // In signup mode, inform user that account already exists and offer 1-click sign-in
-          setExistingUser(data.user);
-          setScreen('existing_account');
-        } else {
-          // Standard login: directly route
-          handlePostAuthRouting(data.user);
-        }
+        handlePostAuthRouting(data.user);
       }
     } catch (err) {
       setIsLoading(false);
-      setErrorMessage(err.message || 'Verification failed. Please try again.');
+      setErrorMessage(err.message || 'Invalid or expired code. Please try again.');
     }
   };
 
@@ -301,56 +380,12 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
         name: fullName.trim(),
         salonName: salonName.trim(),
         city: city.trim(),
-        email: email.trim(),
       });
       setIsLoading(false);
       handlePostAuthRouting(data.user);
     } catch (err) {
       setIsLoading(false);
       setErrorMessage(err.message || 'Failed to complete registration.');
-    }
-  };
-
-  const handlePasswordLogin = async (e) => {
-    e.preventDefault();
-    setErrorMessage('');
-
-    if (!emailOrPhone.trim()) {
-      setErrorMessage('Please enter your email or phone.');
-      return;
-    }
-    if (!password) {
-      setErrorMessage('Please enter your password.');
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const data = await authClient.loginWithPassword(emailOrPhone, password);
-      setIsLoading(false);
-      handlePostAuthRouting(data.user);
-    } catch (err) {
-      setIsLoading(false);
-      setErrorMessage(err.message || 'Login failed. Please check your credentials.');
-    }
-  };
-
-  const handlePostAuthRouting = (user) => {
-    onClose();
-    const activeRole = user?.activeRole || 'customer';
-    if (activeRole === 'salon' || (user?.roles && user.roles.includes('salon') && !user.roles.includes('customer'))) {
-      if (onNavigate) {
-        onNavigate('/salon/dashboard');
-      } else {
-        window.location.href = '/salon/dashboard';
-      }
-    } else {
-      if (onNavigate) {
-        onNavigate('/customer/home');
-      } else {
-        window.location.href = '/customer/home';
-      }
     }
   };
 
@@ -361,7 +396,7 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
       aria-modal="true"
       aria-labelledby="modal-headline"
     >
-      {/* SUBTLE DARK OVERLAY KEEPING LANDING PAGE VISIBLE BEHIND */}
+      {/* SUBTLE DARK OVERLAY */}
       <div
         className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
         onClick={onClose}
@@ -370,7 +405,7 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
 
       {/* WHITE CENTERED MODAL */}
       <div
-        className="relative bg-white text-[#111827] w-full max-w-[440px] rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-100 overflow-hidden z-10 transition-all transform scale-100 my-auto"
+        className="relative bg-white text-[#111827] w-full max-w-[430px] rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-100 overflow-hidden z-10 transition-all transform scale-100 my-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* TOP BAR / CLOSE BUTTON */}
@@ -384,18 +419,17 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
           </button>
         </div>
 
-        {/* BACK BUTTON (When in OTP, Role, Existing, or Password screen) */}
-        {screen !== 'phone' && (
+        {/* BACK BUTTON (When in OTP or Role screen) */}
+        {screen !== 'initial' && (
           <div className="absolute top-4 left-4 z-20">
             <button
               onClick={() => {
-                setScreen('phone');
+                setScreen('initial');
                 setErrorMessage('');
                 setSuccessNotice('');
-                setExistingUser(null);
               }}
               className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-[#64748B] hover:text-[#111827] flex items-center justify-center transition-colors focus:outline-none"
-              aria-label="Back to phone number"
+              aria-label="Back to login methods"
             >
               <ArrowLeft size={16} />
             </button>
@@ -406,11 +440,11 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
         <div className="p-6 sm:p-8 pt-8 sm:pt-9 space-y-6">
 
           {/* ---------------------------------------------------- */}
-          {/* SCREEN 1: PHONE NUMBER INPUT                         */}
+          {/* SCREEN 1: ONLY GOOGLE & EMAIL OTP LOGIN              */}
           {/* ---------------------------------------------------- */}
-          {screen === 'phone' && (
+          {screen === 'initial' && (
             <div className="space-y-6">
-              
+
               {/* UPLOOKZ Logo & Header */}
               <div className="space-y-2 text-left">
                 <div className="flex items-center gap-2.5">
@@ -427,12 +461,10 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
                     id="modal-headline"
                     className="text-2xl sm:text-[1.65rem] font-bold tracking-tight text-[#111827] leading-tight"
                   >
-                    {authMode === 'signup' ? 'Create Your UPLOOKZ Account' : 'Welcome to UPLOOKZ'}
+                    {authMode === 'signup' ? 'Create Your Account' : 'Welcome to UPLOOKZ'}
                   </h2>
                   <p className="text-sm text-[#64748B] mt-1">
-                    {authMode === 'signup'
-                      ? 'Enter your mobile number to get started with verified grooming'
-                      : 'Enter your mobile number to continue'}
+                    Sign in with your Google account or email verification code
                   </p>
                 </div>
               </div>
@@ -448,70 +480,51 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
                 </div>
               )}
 
-              {/* Phone Input Form */}
-              <form onSubmit={handleSendOtp} className="space-y-4" noValidate>
+              {/* ACTION 1: GOOGLE SIGN-IN BUTTON */}
+              <div>
+                <button
+                  type="button"
+                  id="btn-google-login"
+                  onClick={handleGoogleSignInClick}
+                  disabled={isLoading}
+                  className="w-full h-12 inline-flex items-center justify-center gap-3 px-4 rounded-xl border border-[#CBD5E1] bg-white hover:bg-slate-50 text-[#1E293B] font-semibold text-sm shadow-sm hover:shadow transition-all duration-200 active:scale-[0.99] disabled:opacity-70 disabled:cursor-not-allowed group"
+                >
+                  <GoogleLogo className="w-5 h-5 transition-transform group-hover:scale-105" />
+                  <span>Continue with Google</span>
+                </button>
+              </div>
+
+              {/* DIVIDER: OR CONTINUE WITH EMAIL */}
+              <div className="relative flex items-center justify-center">
+                <div className="w-full border-t border-[#E2E8F0]" />
+                <span className="absolute bg-white px-3 text-xs font-medium text-[#94A3B8] uppercase tracking-wider">
+                  or
+                </span>
+              </div>
+
+              {/* ACTION 2: EMAIL OTP INPUT FORM */}
+              <form onSubmit={handleSendEmailOtp} className="space-y-4" noValidate>
                 <div className="space-y-1.5">
-                  <label htmlFor="mobile-input" className="block text-xs font-semibold text-[#475569]">
-                    Mobile Number
+                  <label htmlFor="email-input" className="block text-xs font-semibold text-[#475569]">
+                    Email Address
                   </label>
 
-                  <div className="relative flex items-center border border-[#CBD5E1] rounded-xl focus-within:border-[#0EA5E9] focus-within:ring-2 focus-within:ring-[#0EA5E9]/20 transition-all bg-white overflow-visible">
-                    
-                    {/* Country Code Dropdown Trigger */}
-                    <div className="relative">
-                      <button
-                        type="button"
-                        onClick={() => setShowCountryDropdown(!showCountryDropdown)}
-                        className="h-12 pl-3.5 pr-2.5 flex items-center gap-1.5 text-sm font-semibold text-[#111827] hover:bg-slate-50 transition-colors rounded-l-xl focus:outline-none"
-                        aria-expanded={showCountryDropdown}
-                        aria-label="Select country code"
-                      >
-                        <span className="text-base">{selectedCountry.flag}</span>
-                        <span>{selectedCountry.code}</span>
-                        <ChevronDown size={14} className="text-[#94A3B8]" />
-                      </button>
-
-                      {/* Dropdown Menu */}
-                      {showCountryDropdown && (
-                        <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-[#E2E8F0] rounded-xl shadow-clean-lg z-30 py-1 max-h-56 overflow-y-auto">
-                          {COUNTRY_CODES.map((c) => (
-                            <button
-                              key={c.code}
-                              type="button"
-                              onClick={() => {
-                                setSelectedCountry(c);
-                                setShowCountryDropdown(false);
-                                phoneInputRef.current?.focus();
-                              }}
-                              className={`w-full px-3 py-2 text-left text-xs flex items-center justify-between hover:bg-[#F0F9FF] transition-colors ${
-                                selectedCountry.code === c.code ? 'font-semibold text-[#0EA5E9] bg-[#F0F9FF]' : 'text-[#334155]'
-                              }`}
-                            >
-                              <span className="flex items-center gap-2">
-                                <span>{c.flag}</span>
-                                <span>{c.country}</span>
-                              </span>
-                              <span className="text-[#64748B]">{c.code}</span>
-                            </button>
-                          ))}
-                        </div>
-                      )}
+                  <div className="relative flex items-center border border-[#CBD5E1] rounded-xl focus-within:border-[#0EA5E9] focus-within:ring-2 focus-within:ring-[#0EA5E9]/20 transition-all bg-white">
+                    <div className="pl-3.5 pr-1 text-[#94A3B8]">
+                      <Mail size={18} />
                     </div>
-
-                    {/* Divider */}
-                    <div className="h-6 w-[1px] bg-[#E2E8F0]" />
-
-                    {/* Number Input Field */}
                     <input
-                      ref={phoneInputRef}
-                      id="mobile-input"
-                      type="tel"
-                      inputMode="numeric"
-                      autoComplete="tel-national"
-                      value={phone}
-                      onChange={handlePhoneChange}
-                      placeholder={selectedCountry.placeholder}
-                      className="w-full h-12 pl-3 pr-4 text-base font-medium text-[#111827] placeholder-[#94A3B8] bg-transparent focus:outline-none"
+                      ref={emailInputRef}
+                      id="email-input"
+                      type="email"
+                      autoComplete="email"
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        setErrorMessage('');
+                      }}
+                      placeholder="name@example.com"
+                      className="w-full h-12 pl-2.5 pr-4 text-sm font-medium text-[#111827] placeholder-[#94A3B8] bg-transparent focus:outline-none"
                     />
                   </div>
                 </div>
@@ -519,7 +532,7 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
                 {/* Primary Button */}
                 <button
                   type="submit"
-                  id="btn-send-verification-code"
+                  id="btn-send-email-code"
                   disabled={isLoading}
                   className="btn-lift w-full h-12 inline-flex items-center justify-center gap-2 px-5 rounded-xl bg-[#0EA5E9] hover:bg-[#0284C7] text-white font-semibold text-sm shadow-md shadow-[#0EA5E9]/25 transition-all duration-200 active:scale-[0.99] disabled:opacity-70 disabled:cursor-not-allowed"
                 >
@@ -537,9 +550,9 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
                 </button>
               </form>
 
-              {/* Privacy Message */}
+              {/* Privacy Notice */}
               <p className="text-[12px] text-[#64748B] text-center leading-relaxed">
-                We'll send a 6-digit verification code to your number. By continuing, you agree to our{' '}
+                By continuing, you agree to UPLOOKZ{' '}
                 <a href="#terms" onClick={(e) => e.preventDefault()} className="text-[#0EA5E9] hover:underline">
                   Terms
                 </a>{' '}
@@ -567,7 +580,7 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
                   </p>
                 ) : (
                   <p>
-                    Don't have an account?{' '}
+                    New to UPLOOKZ?{' '}
                     <button
                       type="button"
                       onClick={() => {
@@ -580,25 +593,13 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
                     </button>
                   </p>
                 )}
-
-                {/* Legacy Password Option */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setScreen('password');
-                    setErrorMessage('');
-                  }}
-                  className="text-[11px] text-[#94A3B8] hover:text-[#0EA5E9] transition-colors"
-                >
-                  Or sign in with Password / Email
-                </button>
               </div>
 
             </div>
           )}
 
           {/* ---------------------------------------------------- */}
-          {/* SCREEN 2: 6-DIGIT OTP VERIFICATION SCREEN            */}
+          {/* SCREEN 2: 6-DIGIT EMAIL VERIFICATION CODE SCREEN     */}
           {/* ---------------------------------------------------- */}
           {screen === 'otp' && (
             <div className="space-y-6">
@@ -606,17 +607,15 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
               {/* Heading & Subtitle */}
               <div className="space-y-1.5 text-left pt-2">
                 <h2 className="text-2xl font-bold tracking-tight text-[#111827]">
-                  Verify your number
+                  Verify your email
                 </h2>
                 <div className="text-sm text-[#64748B] flex flex-wrap items-center gap-1.5">
                   <span>Enter the code sent to</span>
-                  <span className="font-semibold text-[#111827]">
-                    {selectedCountry.code} {phone}
-                  </span>
+                  <span className="font-semibold text-[#111827]">{email}</span>
                   <button
                     type="button"
                     onClick={() => {
-                      setScreen('phone');
+                      setScreen('initial');
                       setErrorMessage('');
                     }}
                     className="text-xs font-semibold text-[#0EA5E9] hover:underline ml-1"
@@ -625,6 +624,14 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
                   </button>
                 </div>
               </div>
+
+              {/* Success / Status Alert */}
+              {successNotice && (
+                <div className="p-3 text-xs font-medium text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2">
+                  <CheckCircle2 size={15} className="shrink-0 text-emerald-600" />
+                  <span>{successNotice}</span>
+                </div>
+              )}
 
               {/* Error Alert */}
               {errorMessage && (
@@ -637,25 +644,30 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
                 </div>
               )}
 
-              {/* Dev mode helper badge */}
-              {devCodeHint && (
-                <div className="p-3 bg-[#F0FDF4] border border-[#BBF7D0] rounded-xl text-xs text-[#16A34A] space-y-1">
+              {/* Dev mode helper badge (only shown if SMTP credentials not yet provided in .env) */}
+              {devCodeHint && emailProvider === 'dev_logger' && (
+                <div className="p-3 bg-[#F0FDF4] border border-[#BBF7D0] rounded-xl text-xs text-[#16A34A] space-y-1.5">
                   <p className="font-semibold flex items-center gap-1.5">
-                    <CheckCircle2 size={14} /> Dev OTP Delivery:
+                    <Info size={14} /> Local Testing Mode:
                   </p>
                   <p className="text-[#15803D]">
-                    Server generated code: <strong className="font-mono text-sm tracking-widest">{devCodeHint}</strong>
+                    Verification code: <strong className="font-mono text-sm tracking-widest">{devCodeHint}</strong>
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setOtpValues(devCodeHint.split(''));
-                      triggerVerifyOtp(devCodeHint);
-                    }}
-                    className="text-[11px] underline font-medium hover:text-[#166534]"
-                  >
-                    Auto-fill & Continue
-                  </button>
+                  <div className="flex items-center justify-between pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOtpValues(devCodeHint.split(''));
+                        triggerVerifyOtp(devCodeHint);
+                      }}
+                      className="text-[11px] underline font-semibold hover:text-[#166534]"
+                    >
+                      Auto-fill & Verify
+                    </button>
+                    <span className="text-[10px] text-slate-500">
+                      Add SMTP in .env for inbox delivery
+                    </span>
+                  </div>
                 </div>
               )}
 
@@ -689,7 +701,7 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
                   ) : (
                     <button
                       type="button"
-                      onClick={handleResendOtp}
+                      onClick={handleResendEmailOtp}
                       disabled={isLoading}
                       className="font-semibold text-[#0EA5E9] hover:text-[#0284C7] hover:underline transition-colors"
                     >
@@ -725,70 +737,18 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
           )}
 
           {/* ---------------------------------------------------- */}
-          {/* SCREEN 3: ACCOUNT ALREADY EXISTS NOTICE (SIGNUP FLOW) */}
-          {/* ---------------------------------------------------- */}
-          {screen === 'existing_account' && existingUser && (
-            <div className="space-y-6 text-center pt-2">
-              <div className="w-14 h-14 rounded-2xl bg-[#F0FDF4] border border-[#BBF7D0] text-[#16A34A] flex items-center justify-center mx-auto shadow-sm">
-                <UserCheck size={28} />
-              </div>
-
-              <div className="space-y-1.5">
-                <h2 className="text-2xl font-bold tracking-tight text-[#111827]">
-                  Account Already Exists!
-                </h2>
-                <p className="text-sm text-[#64748B] max-w-xs mx-auto">
-                  An account for <strong className="text-[#111827]">{selectedCountry.code} {phone}</strong> is already registered to <strong className="text-[#111827]">{existingUser.name}</strong>.
-                </p>
-              </div>
-
-              <div className="p-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl text-left space-y-1">
-                <p className="text-xs text-[#64748B]">Saved Account Details</p>
-                <p className="text-sm font-semibold text-[#111827]">{existingUser.name}</p>
-                <p className="text-xs text-[#0EA5E9] font-medium capitalize">
-                  {existingUser.activeRole === 'salon' ? 'Salon Partner' : 'Customer'} Account
-                </p>
-              </div>
-
-              <div className="space-y-2.5">
-                <button
-                  type="button"
-                  onClick={() => handlePostAuthRouting(existingUser)}
-                  className="btn-lift w-full h-12 inline-flex items-center justify-center gap-2 px-5 rounded-xl bg-[#0EA5E9] hover:bg-[#0284C7] text-white font-semibold text-sm shadow-md shadow-[#0EA5E9]/25 transition-all"
-                >
-                  <span>Continue to Your Dashboard</span>
-                  <ArrowRight size={16} />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setScreen('phone');
-                    setPhone('');
-                    setOtpValues(['', '', '', '', '', '']);
-                    setExistingUser(null);
-                  }}
-                  className="w-full py-2 text-xs font-semibold text-[#64748B] hover:text-[#111827] transition-colors"
-                >
-                  Use another mobile number
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* ---------------------------------------------------- */}
-          {/* SCREEN 4: NEW USER REGISTRATION & ROLE ONBOARDING    */}
+          {/* SCREEN 3: NEW USER PROFILE ONBOARDING                */}
           {/* ---------------------------------------------------- */}
           {screen === 'choose_role' && (
             <div className="space-y-6">
-              
+
               <div className="space-y-1 text-left pt-2">
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0]">
                   <CheckCircle2 size={13} />
-                  Phone Verified
+                  Email Verified
                 </div>
                 <h2 className="text-2xl font-bold tracking-tight text-[#111827]">
-                  Create Your Account
+                  Complete Your Profile
                 </h2>
                 <p className="text-sm text-[#64748B]">
                   Choose how you plan to use UPLOOKZ
@@ -812,9 +772,11 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
                       : 'border-[#E2E8F0] hover:border-[#CBD5E1] bg-white'
                   }`}
                 >
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center mb-3 ${
-                    selectedRole === 'customer' ? 'bg-[#0EA5E9] text-white' : 'bg-slate-100 text-[#64748B]'
-                  }`}>
+                  <div
+                    className={`w-9 h-9 rounded-lg flex items-center justify-center mb-3 ${
+                      selectedRole === 'customer' ? 'bg-[#0EA5E9] text-white' : 'bg-slate-100 text-[#64748B]'
+                    }`}
+                  >
                     <User size={18} />
                   </div>
                   <div>
@@ -834,9 +796,11 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
                       : 'border-[#E2E8F0] hover:border-[#CBD5E1] bg-white'
                   }`}
                 >
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center mb-3 ${
-                    selectedRole === 'salon' ? 'bg-[#0EA5E9] text-white' : 'bg-slate-100 text-[#64748B]'
-                  }`}>
+                  <div
+                    className={`w-9 h-9 rounded-lg flex items-center justify-center mb-3 ${
+                      selectedRole === 'salon' ? 'bg-[#0EA5E9] text-white' : 'bg-slate-100 text-[#64748B]'
+                    }`}
+                  >
                     <Store size={18} />
                   </div>
                   <div>
@@ -883,7 +847,7 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
                       required
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      placeholder="e.g. John Doe"
+                      placeholder="e.g. Rahul Sharma"
                       className="w-full h-11 px-3.5 text-sm border border-[#CBD5E1] rounded-xl focus:outline-none focus:border-[#0EA5E9] focus:ring-2 focus:ring-[#0EA5E9]/20"
                     />
                   </div>
@@ -911,91 +875,12 @@ export default function LoginModal({ isOpen, onClose, onNavigate, initialMode = 
             </div>
           )}
 
-          {/* ---------------------------------------------------- */}
-          {/* SCREEN 5: LEGACY PASSWORD LOGIN SCREEN               */}
-          {/* ---------------------------------------------------- */}
-          {screen === 'password' && (
-            <div className="space-y-6">
-              <div className="space-y-1 text-left pt-2">
-                <h2 className="text-2xl font-bold tracking-tight text-[#111827]">
-                  Password Login
-                </h2>
-                <p className="text-sm text-[#64748B]">
-                  Sign in with your registered email or phone and password
-                </p>
-              </div>
-
-              {errorMessage && (
-                <div role="alert" className="p-3 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-xl">
-                  {errorMessage}
-                </div>
-              )}
-
-              <form onSubmit={handlePasswordLogin} className="space-y-3.5">
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-[#475569]">Email or Phone</label>
-                  <input
-                    type="text"
-                    required
-                    value={emailOrPhone}
-                    onChange={(e) => setEmailOrPhone(e.target.value)}
-                    placeholder="john@example.com or 9876543210"
-                    className="w-full h-11 px-3.5 text-sm border border-[#CBD5E1] rounded-xl focus:outline-none focus:border-[#0EA5E9] focus:ring-2 focus:ring-[#0EA5E9]/20"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold text-[#475569]">Password</label>
-                  <input
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full h-11 px-3.5 text-sm border border-[#CBD5E1] rounded-xl focus:outline-none focus:border-[#0EA5E9] focus:ring-2 focus:ring-[#0EA5E9]/20"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="btn-lift w-full h-12 inline-flex items-center justify-center gap-2 px-5 rounded-xl bg-[#0EA5E9] hover:bg-[#0284C7] text-white font-semibold text-sm shadow-md transition-all"
-                >
-                  {isLoading ? (
-                    <span className="inline-flex items-center gap-2">
-                      <Loader2 size={18} className="animate-spin" />
-                      <span>Signing In...</span>
-                    </span>
-                  ) : (
-                    <>
-                      <span>Sign In</span>
-                      <ArrowRight size={16} />
-                    </>
-                  )}
-                </button>
-              </form>
-
-              <div className="text-center pt-2 border-t border-[#E2E8F0]">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setScreen('phone');
-                    setErrorMessage('');
-                  }}
-                  className="text-xs font-semibold text-[#0EA5E9] hover:underline"
-                >
-                  Back to Mobile OTP Login
-                </button>
-              </div>
-            </div>
-          )}
-
         </div>
 
         {/* FOOTER BADGE */}
         <div className="py-3 px-6 bg-[#F8FAFC] border-t border-[#E2E8F0] flex items-center justify-center gap-2 text-[11px] text-[#64748B]">
           <ShieldCheck size={14} className="text-[#0EA5E9]" />
-          <span>Bank-grade 256-bit encrypted verification</span>
+          <span>Bank-grade 256-bit encrypted authentication</span>
         </div>
 
       </div>

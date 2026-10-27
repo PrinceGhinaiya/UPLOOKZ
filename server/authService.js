@@ -2,21 +2,21 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { getActiveSMSProvider } from './smsProvider.js';
+import { sendEmailVerification } from './emailService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const USERS_FILE = path.join(__dirname, 'data', 'users.json');
 
 // Secret salt for OTP hashing so plaintext OTP is never retained in memory
-const OTP_SALT = process.env.OTP_SECRET_SALT || 'uplookz-secure-otp-salt-9817234';
+const OTP_SALT = process.env.OTP_SECRET_SALT || 'uplookz-secure-email-otp-salt-8831924';
 
 // In-memory OTP tracking with security boundaries
-// Map<normalizedPhone, { hashedOtp, expiresAt, attemptsLeft, lastSentAt, requestCount, windowStart, latestOtpForDev }>
+// Map<normalizedEmail, { hashedOtp, expiresAt, attemptsLeft, lastSentAt, requestCount, windowStart, latestOtpForDev }>
 const otpStore = new Map();
 
 // In-memory active sessions
-// Map<token, { phone, userId, createdAt, expiresAt }>
+// Map<token, { email, userId, createdAt, expiresAt }>
 const sessionStore = new Map();
 
 /**
@@ -57,48 +57,33 @@ function hashOtp(otp, salt) {
 }
 
 /**
- * Validate phone number
+ * Standard Email Validator
  */
-export function validatePhoneNumber(phone, countryCode = '+91') {
-  if (!phone || typeof phone !== 'string') {
-    return { valid: false, error: 'Phone number is required.' };
+export function validateEmail(email) {
+  if (!email || typeof email !== 'string') {
+    return { valid: false, error: 'Email address is required.' };
   }
-
-  const cleanDigits = phone.replace(/\D/g, '');
-
-  if (countryCode === '+91') {
-    // Standard Indian mobile number: 10 digits starting with 6-9
-    const mobile10 = cleanDigits.slice(-10);
-    if (mobile10.length !== 10) {
-      return { valid: false, error: 'Please enter a valid 10-digit mobile number.' };
-    }
-    if (!/^[6-9]\d{9}$/.test(mobile10)) {
-      return { valid: false, error: 'Mobile number must start with 6, 7, 8, or 9.' };
-    }
-    return { valid: true, normalized: `+91${mobile10}` };
+  const cleanEmail = email.trim().toLowerCase();
+  // Standard RFC 5322 compatible regex
+  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+  if (!emailRegex.test(cleanEmail)) {
+    return { valid: false, error: 'Please enter a valid email address.' };
   }
-
-  // Other country codes
-  if (cleanDigits.length < 7 || cleanDigits.length > 15) {
-    return { valid: false, error: 'Please enter a valid mobile number.' };
-  }
-
-  const cleanCode = countryCode.startsWith('+') ? countryCode : `+${countryCode}`;
-  return { valid: true, normalized: `${cleanCode}${cleanDigits}` };
+  return { valid: true, normalized: cleanEmail };
 }
 
 /**
- * Send OTP to mobile number
+ * Send OTP to user's email
  */
-export async function sendOtp(rawPhone, countryCode = '+91') {
-  const validation = validatePhoneNumber(rawPhone, countryCode);
+export async function sendEmailOtp(rawEmail) {
+  const validation = validateEmail(rawEmail);
   if (!validation.valid) {
     return { success: false, status: 400, message: validation.error };
   }
 
-  const normalizedPhone = validation.normalized;
+  const normalizedEmail = validation.normalized;
   const now = Date.now();
-  const existing = otpStore.get(normalizedPhone);
+  const existing = otpStore.get(normalizedEmail);
 
   // 1. Resend cooldown protection (minimum 30 seconds)
   if (existing && existing.lastSentAt) {
@@ -115,11 +100,11 @@ export async function sendOtp(rawPhone, countryCode = '+91') {
     }
   }
 
-  // 2. Abuse protection (maximum 5 requests per hour)
+  // 2. Abuse protection (maximum 6 requests per hour per email)
   if (existing) {
     const windowElapsed = now - existing.windowStart;
     if (windowElapsed < 60 * 60 * 1000) {
-      if (existing.requestCount >= 5) {
+      if (existing.requestCount >= 6) {
         return {
           success: false,
           status: 429,
@@ -129,7 +114,7 @@ export async function sendOtp(rawPhone, countryCode = '+91') {
     }
   }
 
-  // 3. Cryptographically secure 6-digit OTP generation (never hardcoded)
+  // 3. Cryptographically secure 6-digit OTP generation
   const otpNumber = crypto.randomInt(100000, 1000000);
   const otpString = otpNumber.toString();
   const hashed = hashOtp(otpString, OTP_SALT);
@@ -143,52 +128,47 @@ export async function sendOtp(rawPhone, countryCode = '+91') {
     ? existing.windowStart
     : now;
 
-  otpStore.set(normalizedPhone, {
+  otpStore.set(normalizedEmail, {
     hashedOtp: hashed,
     expiresAt: now + 5 * 60 * 1000, // 5 minutes expiration
     attemptsLeft: 4,               // Max 4 failed verification attempts
     lastSentAt: now,
     requestCount,
     windowStart,
-    // When in dev logger mode, store a dev hint so local dev testing UI can assist if SMS key not provided
     devCode: otpString,
   });
 
-  // 5. Send via configured SMS provider
-  const smsProvider = getActiveSMSProvider();
-  const messageBody = `Your UPLOOKZ verification code is: ${otpString}. Valid for 5 minutes. Do not share this code.`;
-  
-  const providerResult = await smsProvider.sendOTP(normalizedPhone, otpString, messageBody);
+  // 5. Send via configured email service
+  const emailResult = await sendEmailVerification(normalizedEmail, otpString);
 
   return {
     success: true,
     status: 200,
-    message: 'Verification code sent successfully.',
+    message: `Verification code sent to ${normalizedEmail}.`,
     cooldownSeconds: 30,
     expiresInSeconds: 300,
-    provider: providerResult.provider,
-    // Note: In development mode if dev logger is active, provide devHint for local paired testing
-    devHint: providerResult.provider === 'dev_logger' ? otpString : undefined,
+    provider: emailResult.provider,
+    devHint: emailResult.devCode,
   };
 }
 
 /**
- * Verify OTP
+ * Verify Email OTP
  */
-export async function verifyOtp(rawPhone, countryCode = '+91', inputOtp) {
-  const validation = validatePhoneNumber(rawPhone, countryCode);
+export async function verifyEmailOtp(rawEmail, inputOtp) {
+  const validation = validateEmail(rawEmail);
   if (!validation.valid) {
     return { success: false, status: 400, message: validation.error };
   }
 
-  const normalizedPhone = validation.normalized;
+  const normalizedEmail = validation.normalized;
 
   if (!inputOtp || typeof inputOtp !== 'string' || inputOtp.trim().length !== 6) {
     return { success: false, status: 400, message: 'Please enter a valid 6-digit code.' };
   }
 
   const cleanOtp = inputOtp.trim();
-  const session = otpStore.get(normalizedPhone);
+  const session = otpStore.get(normalizedEmail);
 
   if (!session) {
     return {
@@ -202,7 +182,7 @@ export async function verifyOtp(rawPhone, countryCode = '+91', inputOtp) {
 
   // 1. Expiration check
   if (now > session.expiresAt) {
-    otpStore.delete(normalizedPhone);
+    otpStore.delete(normalizedEmail);
     return {
       success: false,
       status: 400,
@@ -212,7 +192,7 @@ export async function verifyOtp(rawPhone, countryCode = '+91', inputOtp) {
 
   // 2. Attempts check
   if (session.attemptsLeft <= 0) {
-    otpStore.delete(normalizedPhone);
+    otpStore.delete(normalizedEmail);
     return {
       success: false,
       status: 400,
@@ -230,7 +210,7 @@ export async function verifyOtp(rawPhone, countryCode = '+91', inputOtp) {
   if (!isMatch) {
     session.attemptsLeft -= 1;
     if (session.attemptsLeft <= 0) {
-      otpStore.delete(normalizedPhone);
+      otpStore.delete(normalizedEmail);
       return {
         success: false,
         status: 400,
@@ -245,12 +225,19 @@ export async function verifyOtp(rawPhone, countryCode = '+91', inputOtp) {
     };
   }
 
-  // OTP verified successfully! Invalidate OTP session to prevent reuse
-  otpStore.delete(normalizedPhone);
+  // OTP verified! Invalidate OTP session to prevent replay
+  otpStore.delete(normalizedEmail);
 
-  // Check if user exists in database
+  // Check if user already exists
   const users = loadUsers();
-  const existingUser = users[normalizedPhone];
+  let existingUser = null;
+
+  for (const u of Object.values(users)) {
+    if (u.email && u.email.toLowerCase() === normalizedEmail) {
+      existingUser = u;
+      break;
+    }
+  }
 
   // Generate secure 256-bit session token
   const token = crypto.randomBytes(32).toString('hex');
@@ -258,7 +245,7 @@ export async function verifyOtp(rawPhone, countryCode = '+91', inputOtp) {
   if (existingUser) {
     sessionStore.set(token, {
       userId: existingUser.id,
-      phone: normalizedPhone,
+      email: normalizedEmail,
       createdAt: now,
       expiresAt: now + 30 * 24 * 60 * 60 * 1000, // 30 days
     });
@@ -270,9 +257,8 @@ export async function verifyOtp(rawPhone, countryCode = '+91', inputOtp) {
       isNewUser: false,
       user: {
         id: existingUser.id,
-        phone: existingUser.phone,
-        name: existingUser.name,
         email: existingUser.email,
+        name: existingUser.name,
         roles: existingUser.roles || [existingUser.activeRole],
         activeRole: existingUser.activeRole || 'customer',
         salonName: existingUser.salonName,
@@ -285,7 +271,7 @@ export async function verifyOtp(rawPhone, countryCode = '+91', inputOtp) {
   // New user registration required
   sessionStore.set(token, {
     userId: `temp_${Date.now()}`,
-    phone: normalizedPhone,
+    email: normalizedEmail,
     createdAt: now,
     expiresAt: now + 24 * 60 * 60 * 1000,
   });
@@ -296,12 +282,132 @@ export async function verifyOtp(rawPhone, countryCode = '+91', inputOtp) {
     token,
     isNewUser: true,
     user: {
-      phone: normalizedPhone,
+      email: normalizedEmail,
       isVerified: true,
       roles: [],
       activeRole: null,
     },
-    message: 'Phone verified! Please select your account type.',
+    message: 'Email verified! Please complete your account profile.',
+  };
+}
+
+/**
+ * Handle Google Authentication
+ */
+export async function loginWithGoogle(payload) {
+  let googleEmail = '';
+  let googleName = '';
+  let googlePicture = '';
+  let googleSub = '';
+
+  if (payload.credential) {
+    // Decode Google JWT Token (JWT header.payload.signature)
+    try {
+      const parts = payload.credential.split('.');
+      if (parts.length >= 2) {
+        const payloadJson = Buffer.from(parts[1], 'base64').toString('utf8');
+        const tokenData = JSON.parse(payloadJson);
+        googleEmail = tokenData.email;
+        googleName = tokenData.name || tokenData.given_name || 'Google User';
+        googlePicture = tokenData.picture || '';
+        googleSub = tokenData.sub || '';
+      }
+    } catch (e) {
+      console.error('[UPLOOKZ AUTH] Error decoding Google credential:', e);
+    }
+  }
+
+  if (!googleEmail && payload.email) {
+    googleEmail = payload.email;
+    googleName = payload.name || 'Google User';
+    googlePicture = payload.picture || '';
+    googleSub = payload.sub || `google_${Date.now()}`;
+  }
+
+  const validation = validateEmail(googleEmail);
+  if (!validation.valid) {
+    return { success: false, status: 400, message: 'Invalid Google email profile received.' };
+  }
+
+  const normalizedEmail = validation.normalized;
+  const users = loadUsers();
+  let foundUser = null;
+
+  for (const u of Object.values(users)) {
+    if (u.email && u.email.toLowerCase() === normalizedEmail) {
+      foundUser = u;
+      break;
+    }
+  }
+
+  const token = crypto.randomBytes(32).toString('hex');
+  const now = Date.now();
+
+  if (foundUser) {
+    // Existing user
+    sessionStore.set(token, {
+      userId: foundUser.id,
+      email: normalizedEmail,
+      createdAt: now,
+      expiresAt: now + 30 * 24 * 60 * 60 * 1000,
+    });
+
+    return {
+      success: true,
+      status: 200,
+      token,
+      isNewUser: false,
+      user: {
+        id: foundUser.id,
+        email: foundUser.email,
+        name: foundUser.name,
+        picture: foundUser.picture || googlePicture,
+        roles: foundUser.roles || [foundUser.activeRole],
+        activeRole: foundUser.activeRole || 'customer',
+        salonName: foundUser.salonName,
+        city: foundUser.city,
+      },
+      message: 'Google Sign-In successful!',
+    };
+  }
+
+  // Create new user record immediately with Google profile
+  const newUser = {
+    id: `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    email: normalizedEmail,
+    name: googleName,
+    picture: googlePicture,
+    googleId: googleSub,
+    roles: ['customer'],
+    activeRole: 'customer',
+    createdAt: new Date().toISOString(),
+    isVerified: true,
+  };
+
+  users[normalizedEmail] = newUser;
+  saveUsers(users);
+
+  sessionStore.set(token, {
+    userId: newUser.id,
+    email: normalizedEmail,
+    createdAt: now,
+    expiresAt: now + 30 * 24 * 60 * 60 * 1000,
+  });
+
+  return {
+    success: true,
+    status: 200,
+    token,
+    isNewUser: false,
+    user: {
+      id: newUser.id,
+      email: newUser.email,
+      name: newUser.name,
+      picture: newUser.picture,
+      roles: newUser.roles,
+      activeRole: newUser.activeRole,
+    },
+    message: 'Welcome to UPLOOKZ! Signed in with Google.',
   };
 }
 
@@ -311,22 +417,21 @@ export async function verifyOtp(rawPhone, countryCode = '+91', inputOtp) {
 export async function completeRegistration(token, details) {
   const session = sessionStore.get(token);
   if (!session) {
-    return { success: false, status: 401, message: 'Session expired. Please verify your phone again.' };
+    return { success: false, status: 401, message: 'Session expired. Please verify your email again.' };
   }
 
-  const { role, name, email, salonName, city } = details || {};
+  const { role, name, salonName, city } = details || {};
   if (!role || (role !== 'customer' && role !== 'salon')) {
-    return { success: false, status: 400, message: 'Please select a valid account role (Customer or Salon Owner).' };
+    return { success: false, status: 400, message: 'Please select a valid account role (Customer or Salon Partner).' };
   }
 
   const users = loadUsers();
-  const phone = session.phone;
+  const email = session.email;
 
   const newUser = {
     id: `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-    phone,
+    email,
     name: name?.trim() || (role === 'customer' ? 'UPLOOKZ Customer' : 'Salon Partner'),
-    email: email?.trim() || '',
     salonName: salonName?.trim() || '',
     city: city?.trim() || '',
     roles: [role],
@@ -335,7 +440,7 @@ export async function completeRegistration(token, details) {
     isVerified: true,
   };
 
-  users[phone] = newUser;
+  users[email] = newUser;
   saveUsers(users);
 
   // Update session
@@ -347,9 +452,8 @@ export async function completeRegistration(token, details) {
     token,
     user: {
       id: newUser.id,
-      phone: newUser.phone,
-      name: newUser.name,
       email: newUser.email,
+      name: newUser.name,
       salonName: newUser.salonName,
       city: newUser.city,
       roles: newUser.roles,
@@ -373,12 +477,11 @@ export async function switchRole(token, targetRole) {
   }
 
   const users = loadUsers();
-  const user = users[session.phone];
+  const user = users[session.email];
   if (!user) {
     return { success: false, status: 404, message: 'User not found.' };
   }
 
-  // Ensure target role is in user's roles
   if (!user.roles.includes(targetRole)) {
     user.roles.push(targetRole);
   }
@@ -391,71 +494,14 @@ export async function switchRole(token, targetRole) {
     status: 200,
     user: {
       id: user.id,
-      phone: user.phone,
-      name: user.name,
       email: user.email,
+      name: user.name,
       salonName: user.salonName,
       city: user.city,
       roles: user.roles,
       activeRole: user.activeRole,
     },
     message: `Switched to ${targetRole === 'customer' ? 'Customer' : 'Salon Partner'} mode.`,
-  };
-}
-
-/**
- * Legacy Password Login (preserves existing accounts without breaking)
- */
-export async function loginWithPassword(emailOrPhone, password) {
-  if (!emailOrPhone || !password) {
-    return { success: false, status: 400, message: 'Please enter your email/phone and password.' };
-  }
-
-  const users = loadUsers();
-  const cleanInput = emailOrPhone.trim().toLowerCase();
-
-  // Search by phone or email
-  let foundUser = null;
-  for (const u of Object.values(users)) {
-    if (u.email?.toLowerCase() === cleanInput || u.phone?.replace(/\D/g, '') === cleanInput.replace(/\D/g, '')) {
-      foundUser = u;
-      break;
-    }
-  }
-
-  if (!foundUser) {
-    return { success: false, status: 401, message: 'Account not found with this email or phone.' };
-  }
-
-  // Verify SHA-256 password hash (or allow standard default hash)
-  const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
-  if (foundUser.passwordHash && foundUser.passwordHash !== passwordHash) {
-    return { success: false, status: 401, message: 'Incorrect password. Please try again.' };
-  }
-
-  const token = crypto.randomBytes(32).toString('hex');
-  sessionStore.set(token, {
-    userId: foundUser.id,
-    phone: foundUser.phone,
-    createdAt: Date.now(),
-    expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
-  });
-
-  return {
-    success: true,
-    status: 200,
-    token,
-    user: {
-      id: foundUser.id,
-      phone: foundUser.phone,
-      name: foundUser.name,
-      email: foundUser.email,
-      roles: foundUser.roles || [foundUser.activeRole],
-      activeRole: foundUser.activeRole || 'customer',
-      salonName: foundUser.salonName,
-      city: foundUser.city,
-    },
-    message: 'Signed in successfully!',
   };
 }
 
@@ -472,7 +518,7 @@ export async function getSessionUser(token) {
   }
 
   const users = loadUsers();
-  const user = users[session.phone];
+  const user = users[session.email];
   if (!user) {
     return { success: false, status: 404, message: 'User not found' };
   }
@@ -482,9 +528,8 @@ export async function getSessionUser(token) {
     status: 200,
     user: {
       id: user.id,
-      phone: user.phone,
-      name: user.name,
       email: user.email,
+      name: user.name,
       roles: user.roles || [user.activeRole],
       activeRole: user.activeRole || 'customer',
       salonName: user.salonName,

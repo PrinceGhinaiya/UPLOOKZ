@@ -42,5 +42,85 @@
     "activeRole": "salon",
     "createdAt": "2026-10-15T17:48:32.172Z",
     "isVerified": true
+  },
+  "+917698984393": {
+    "id": "usr_1792088658617_qkbh4",
+    "phone": "+917698984393",
+    "name": "jbjb",
+    "email": "",
+    "salonName": "",
+    "city": "",
+    "roles": [
+      "customer"
+    ],
+    "activeRole": "customer",
+    "createdAt": "2026-10-15T18:24:18.617Z",
+    "isVerified": true
+  },
+  "user.google@gmail.com": {
+    "id": "usr_1793106013559_bww68",
+    "email": "user.google@gmail.com",
+    "name": "Google User",
+    "picture": "https://api.dicebear.com/7.x/initials/svg?seed=Google%20User",
+    "googleId": "google_1793106013553",
+    "roles": [
+      "customer",
+      "salon"
+    ],
+    "activeRole": "salon",
+    "createdAt": "2026-10-27T13:00:13.559Z",
+    "isVerified": true
+  },
+  "test.grooming@uplookz.com": {
+    "id": "usr_1793106158925_nsgm8",
+    "email": "test.grooming@uplookz.com",
+    "name": "Ankit Sharma",
+    "salonName": "",
+    "city": "",
+    "roles": [
+      "customer"
+    ],
+    "activeRole": "customer",
+    "createdAt": "2026-10-27T13:02:38.926Z",
+    "isVerified": true
+  },
+  "alex.google@gmail.com": {
+    "id": "usr_1793106158936_1fh57",
+    "email": "alex.google@gmail.com",
+    "name": "Alex Johnson",
+    "picture": "https://example.com/avatar.jpg",
+    "googleId": "google_1793106158935",
+    "roles": [
+      "customer"
+    ],
+    "activeRole": "customer",
+    "createdAt": "2026-10-27T13:02:38.936Z",
+    "isVerified": true
+  },
+  "ghinaiyaprince12@gmail.com": {
+    "id": "usr_1793107732478_amj20",
+    "email": "ghinaiyaprince12@gmail.com",
+    "name": "Prince Ghinaiya",
+    "picture": "https://lh3.googleusercontent.com/a/ACg8ocKuO5s4VvAv8JnoV1jePeX8kKxj7zyJFvv4msYBIVw-pePw25L1=s96-c",
+    "googleId": "117163169932188250887",
+    "roles": [
+      "customer"
+    ],
+    "activeRole": "customer",
+    "createdAt": "2026-10-27T13:28:52.478Z",
+    "isVerified": true
+  },
+  "princeghinaiya12@gmail.com": {
+    "id": "usr_1793108638449_2s1o5",
+    "email": "princeghinaiya12@gmail.com",
+    "name": "Prince Ghinaiya",
+    "salonName": "",
+    "city": "",
+    "roles": [
+      "customer"
+    ],
+    "activeRole": "customer",
+    "createdAt": "2026-10-27T13:43:58.449Z",
+    "isVerified": true
   }
 }

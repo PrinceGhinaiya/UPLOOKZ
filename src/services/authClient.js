@@ -53,11 +53,11 @@ export const authClient = {
     notifyListeners(null);
   },
 
-  async sendOtp(phone, countryCode = '+91') {
-    const res = await fetch('/api/auth/send-otp', {
+  async sendEmailOtp(email) {
+    const res = await fetch('/api/auth/send-email-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone, countryCode }),
+      body: JSON.stringify({ email }),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -66,15 +66,31 @@ export const authClient = {
     return data;
   },
 
-  async verifyOtp(phone, countryCode = '+91', otp) {
-    const res = await fetch('/api/auth/verify-otp', {
+  async verifyEmailOtp(email, otp) {
+    const res = await fetch('/api/auth/verify-email-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone, countryCode, otp }),
+      body: JSON.stringify({ email, otp }),
     });
     const data = await res.json();
     if (!res.ok) {
       throw new Error(data.message || 'Failed to verify verification code.');
+    }
+    if (data.success && data.token && data.user) {
+      this.setSession(data.token, data.user);
+    }
+    return data;
+  },
+
+  async loginWithGoogle(payload) {
+    const res = await fetch('/api/auth/google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || 'Google sign-in failed.');
     }
     if (data.success && data.token && data.user) {
       this.setSession(data.token, data.user);
@@ -118,22 +134,6 @@ export const authClient = {
     }
     if (data.success && data.user) {
       this.setSession(token, data.user);
-    }
-    return data;
-  },
-
-  async loginWithPassword(emailOrPhone, password) {
-    const res = await fetch('/api/auth/login-password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ emailOrPhone, password }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.message || 'Failed to sign in.');
-    }
-    if (data.success && data.token && data.user) {
-      this.setSession(data.token, data.user);
     }
     return data;
   },

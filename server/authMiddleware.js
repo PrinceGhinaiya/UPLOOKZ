@@ -1,9 +1,9 @@
 import {
-  sendOtp,
-  verifyOtp,
+  sendEmailOtp,
+  verifyEmailOtp,
+  loginWithGoogle,
   completeRegistration,
   switchRole,
-  loginWithPassword,
   getSessionUser,
   logout,
 } from './authService.js';
@@ -16,7 +16,6 @@ function readJsonBody(req) {
     let body = '';
     req.on('data', (chunk) => {
       body += chunk;
-      // Protect against overly large payloads (limit to 1MB)
       if (body.length > 1e6) {
         req.socket.destroy();
         reject(new Error('Payload too large'));
@@ -70,26 +69,32 @@ export async function authMiddleware(req, res, next) {
   }
 
   // Parse path relative to /api/auth
-  // URL might be '/send-otp' or '/api/auth/send-otp' depending on mount
   const url = req.url.split('?')[0];
   const cleanPath = url.replace(/^\/api\/auth/, '');
 
   try {
-    // 1. POST /api/auth/send-otp
-    if (req.method === 'POST' && (cleanPath === '/send-otp' || cleanPath === 'send-otp')) {
+    // 1. POST /api/auth/send-email-otp
+    if (req.method === 'POST' && (cleanPath === '/send-email-otp' || cleanPath === 'send-email-otp')) {
       const body = await readJsonBody(req);
-      const result = await sendOtp(body.phone, body.countryCode);
+      const result = await sendEmailOtp(body.email);
       return sendJson(res, result.status, result);
     }
 
-    // 2. POST /api/auth/verify-otp
-    if (req.method === 'POST' && (cleanPath === '/verify-otp' || cleanPath === 'verify-otp')) {
+    // 2. POST /api/auth/verify-email-otp
+    if (req.method === 'POST' && (cleanPath === '/verify-email-otp' || cleanPath === 'verify-email-otp')) {
       const body = await readJsonBody(req);
-      const result = await verifyOtp(body.phone, body.countryCode, body.otp);
+      const result = await verifyEmailOtp(body.email, body.otp);
       return sendJson(res, result.status, result);
     }
 
-    // 3. POST /api/auth/complete-registration
+    // 3. POST /api/auth/google
+    if (req.method === 'POST' && (cleanPath === '/google' || cleanPath === 'google')) {
+      const body = await readJsonBody(req);
+      const result = await loginWithGoogle(body);
+      return sendJson(res, result.status, result);
+    }
+
+    // 4. POST /api/auth/complete-registration
     if (req.method === 'POST' && (cleanPath === '/complete-registration' || cleanPath === 'complete-registration')) {
       const body = await readJsonBody(req);
       const token = getBearerToken(req) || body.token;
@@ -97,18 +102,11 @@ export async function authMiddleware(req, res, next) {
       return sendJson(res, result.status, result);
     }
 
-    // 4. POST /api/auth/switch-role
+    // 5. POST /api/auth/switch-role
     if (req.method === 'POST' && (cleanPath === '/switch-role' || cleanPath === 'switch-role')) {
       const body = await readJsonBody(req);
       const token = getBearerToken(req) || body.token;
       const result = await switchRole(token, body.targetRole);
-      return sendJson(res, result.status, result);
-    }
-
-    // 5. POST /api/auth/login-password (legacy email/password support)
-    if (req.method === 'POST' && (cleanPath === '/login-password' || cleanPath === 'login-password')) {
-      const body = await readJsonBody(req);
-      const result = await loginWithPassword(body.emailOrPhone, body.password);
       return sendJson(res, result.status, result);
     }
 
@@ -126,7 +124,6 @@ export async function authMiddleware(req, res, next) {
       return sendJson(res, result.status, result);
     }
 
-    // Unknown auth route
     if (next) {
       return next();
     }
