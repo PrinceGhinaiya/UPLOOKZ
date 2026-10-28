@@ -122,5 +122,19 @@
     "activeRole": "customer",
     "createdAt": "2026-10-27T13:43:58.449Z",
     "isVerified": true
+  },
+  "shreykamani0007@gmail.com": {
+    "id": "usr_1793110153641_gyjhi",
+    "email": "shreykamani0007@gmail.com",
+    "name": "Shrey kamani",
+    "picture": "https://lh3.googleusercontent.com/a-/ALV-UjVvfMqMy_o1tmCizno2WIrn3ARB0ws6xr-ZrrMg_C2LJpe_nr8u5UP5dFn2rTHJvescD03px3vk0UULjJ-riGg4l0sl7yL58aRC8_5qEBkWqGiAJWuZShOYW8EEGoPIPoU2uyL9Ej0ZIV1MPWJAA4-8rPjVW7TXtHiFqV1aBqkytzpqTAJVqSOiw1jX3ao7t3IU4ur3tf1q06_bFl98slMPXi1zLuIGPrYAXLSSGmcrmSDMrgvuGCL5lhfzHbzmPbzlg8Wc9-huUhlMcKUNx5aH8pD59Wh16TdXLN6vPp2yhMYCe_ysvPipjKl6d3clSSAGmthOfm2xrB6458lmhV36tfaxaaVsPzl2OpCnwMitTLGvRKLP2dAoiYCio7F65yvrvV2kHGs_Nspu36crRrpiW4-hR5wA5GUZaoIyS9ZdMmOhPyMXeR9AGK2n-Bx1R8V8CZsJ41ubnSGOVGNFVv_E2BgIgEW1QTQw7ahIdWNjYtT-1JZT4QRS_xGyc23Wwgw5OzD63fT7y2cdh3cPybz-VD4IZI38iUGcr266sAxo_UVB7vU4_Iz65dzOCim8sjT79u192FXuZyp-ER6WwDJSBnCeOXS4QYgeHiE9slhh0hg8i7VwLGrvUQP59PwO-vKljQXAqkSC-oDZdCUdtoC7A1Hny0Lkkw05b2QYkcTeAUWh_1pGVinl5gKQ7z_qZKuGWgSMmrk2_ki9Ng-yHk3XT6PKU-R9qcpzqou4wun62EVLgEptAMZiAtx9eyKaQ2tbdJRA_NVbOo43h6I9lFf60_AD9gtXTW3wajD1ZyAUIYvrYsVUKdo7MZG4x2zPaZqcfZED8nxf3zPGSiUn_WwRBK2Rya1cziD_kTHhzJb1dQBgahJYUFgWEhOfaL_wXp7M8sHy35Fcm3totGV8NxvR-WObfYrc9aDgbSbj8RpihjjggThv6zaxuaSI_Ak4KHo2EvUdpSipIeUQ9dIw80s48CZDDO9Cab3zwv-FpzvndANY-VxBbHOXtjJ7jMi1mISRCdwbukIp7iE88kTFG2zeOA8aWGBSC0RlGWMf-nicKdvcX6q3jl9gfA=s96-c",
+    "googleId": "107304886495287829290",
+    "roles": [
+      "customer",
+      "salon"
+    ],
+    "activeRole": "salon",
+    "createdAt": "2026-10-27T14:09:13.642Z",
+    "isVerified": true
   }
 }

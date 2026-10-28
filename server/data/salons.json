@@ -1,0 +1,61 @@
+[
+  {
+    "id": "salon_apex_01",
+    "ownerId": "usr_salon_02",
+    "name": "Apex Studio & Grooming",
+    "tagline": "Premium Unisex Styling & Executive Grooming",
+    "description": "Experience world-class hair styling, beard grooming, and skincare treatments with master barbers and certified colorists in an ultra-modern, serene lounge.",
+    "phone": "+91 98765 01234",
+    "email": "salon@example.com",
+    "address": "Plot 42, Linking Road, Near Bandra Station",
+    "city": "Mumbai, Bandra West",
+    "state": "Maharashtra",
+    "pincode": "400050",
+    "openingTime": "09:00",
+    "closingTime": "21:00",
+    "workingDays": [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday"
+    ],
+    "holidays": [
+      "2026-11-12",
+      "2026-12-25"
+    ],
+    "amenities": [
+      "High-Speed Wi-Fi",
+      "Air Conditioning",
+      "Free Dedicated Parking",
+      "Complimentary Espresso & Infused Water",
+      "UPI & Card Accepted",
+      "UV-Sanitized Tools",
+      "Unisex Waiting Lounge",
+      "Wheelchair Accessible"
+    ],
+    "specialties": [
+      "Executive Haircuts",
+      "Precision Fade & Beard Sculpting",
+      "Keratin & Hair Botox",
+      "HydraFacial Glow Therapy",
+      "Scalp Rejuvenation"
+    ],
+    "policies": {
+      "cancellationHours": 2,
+      "cancellationPolicy": "Free cancellation up to 2 hours before scheduled appointment time.",
+      "lateArrivalMinutes": 15,
+      "lateArrivalPolicy": "Please arrive 5-10 minutes early. Bookings may be adjusted if arrival exceeds 15 minutes.",
+      "walkInPolicy": "Walk-ins are managed through our real-time Live Queue on a first-come, first-served basis."
+    },
+    "logo": "",
+    "gallery": [],
+    "rating": 4.9,
+    "reviewCount": 128,
+    "verified": true,
+    "active": true,
+    "createdAt": "2026-01-12T14:30:00.000Z"
+  }
+]

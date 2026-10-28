@@ -1,0 +1,90 @@
+[
+  {
+    "id": "srv_01",
+    "salonId": "salon_apex_01",
+    "name": "Executive Haircut & Styling",
+    "category": "Hair",
+    "price": 650,
+    "durationMinutes": 45,
+    "description": "Personalized consultation, custom precision cut, revitalizing hair wash, and blowdry finish.",
+    "active": true,
+    "image": ""
+  },
+  {
+    "id": "srv_02",
+    "salonId": "salon_apex_01",
+    "name": "Beard Sculpt & Luxury Shave",
+    "category": "Beard & Shave",
+    "price": 400,
+    "durationMinutes": 30,
+    "description": "Hot towel prep, straight-razor detailing, beard oil treatment, and soothing aftershave balm.",
+    "active": true,
+    "image": ""
+  },
+  {
+    "id": "srv_03",
+    "salonId": "salon_apex_01",
+    "name": "Hair Spa & Scalp Detox",
+    "category": "Hair",
+    "price": 1200,
+    "durationMinutes": 60,
+    "description": "Deep nourishing hair mask, steam infusion, and relaxing 20-minute acupressure head massage.",
+    "active": true,
+    "image": ""
+  },
+  {
+    "id": "srv_04",
+    "salonId": "salon_apex_01",
+    "name": "Hydra Glow Deep Facial",
+    "category": "Skin & Facial",
+    "price": 1800,
+    "durationMinutes": 60,
+    "description": "Ultrasonic pore cleansing, antioxidant serum infusion, and brightening cold-globe massage.",
+    "active": true,
+    "image": ""
+  },
+  {
+    "id": "srv_05",
+    "salonId": "salon_apex_01",
+    "name": "Royal Grooming Package (Hair + Beard + Facial)",
+    "category": "Combo Packages",
+    "price": 2400,
+    "durationMinutes": 105,
+    "description": "Full signature haircut, luxury beard sculpt, and fast-acting 30-min charcoal express facial.",
+    "active": true,
+    "image": ""
+  },
+  {
+    "id": "srv_06",
+    "salonId": "salon_apex_01",
+    "name": "Charcoal Blackhead Peel & Mask",
+    "category": "Skin & Facial",
+    "price": 500,
+    "durationMinutes": 25,
+    "description": "Targeted T-zone unclogging with botanical soothing gel for instant clarity.",
+    "active": true,
+    "image": ""
+  },
+  {
+    "id": "srv_07",
+    "salonId": "salon_apex_01",
+    "name": "Keratin Smoothing Treatment",
+    "category": "Hair",
+    "price": 3500,
+    "durationMinutes": 120,
+    "description": "Formaldehyde-free protein smoothing that eliminates frizz for up to 3 months.",
+    "active": true,
+    "image": ""
+  },
+  {
+    "id": "srv_08",
+    "salonId": "salon_apex_01",
+    "name": "Head & Shoulder Acupressure Massage",
+    "category": "Spa & Wellness",
+    "price": 700,
+    "durationMinutes": 35,
+    "description": "Relieves neck tension and stimulates scalp circulation with therapeutic herbal oils.",
+    "active": true,
+    "image": ""
+  }
+]

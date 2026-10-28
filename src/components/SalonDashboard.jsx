@@ -1,8 +1,29 @@
-import React, { useState, useEffect } from 'react';
-import { Store, Users, Calendar, DollarSign, LogOut, Star, Clock, CheckCircle2, Plus, UserCheck } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import SalonHeader from './salon/SalonHeader';
+import SalonSidebar from './salon/SalonSidebar';
+import SalonOverviewTab from './salon/SalonOverviewTab';
+import SalonAppointmentsTab from './salon/SalonAppointmentsTab';
+import SalonQueueTab from './salon/SalonQueueTab';
+import SalonCalendarTab from './salon/SalonCalendarTab';
+import SalonServicesTab from './salon/SalonServicesTab';
+import SalonStaffTab from './salon/SalonStaffTab';
+import SalonCustomersTab from './salon/SalonCustomersTab';
+import SalonAnalyticsTab from './salon/SalonAnalyticsTab';
+import SalonReviewsTab from './salon/SalonReviewsTab';
+import SalonProfileTab from './salon/SalonProfileTab';
+import SalonSettingsTab from './salon/SalonSettingsTab';
+import SalonOnboardingWizard from './salon/SalonOnboardingWizard';
+import {
+  NewAppointmentModal,
+  AddWalkInModal,
+  ServiceModal,
+  RescheduleModal
+} from './salon/SalonModals';
+import { salonClient } from '../services/salonClient';
 import { authClient } from '../services/authClient';
 
 export default function SalonDashboard({ onNavigate }) {
+  // Current user & authentication
   const [currentUser, setCurrentUser] = useState(() => authClient.getStoredUser() || {
     name: 'Rahul Sharma',
     salonName: 'Apex Studio & Grooming',
@@ -11,230 +32,443 @@ export default function SalonDashboard({ onNavigate }) {
     activeRole: 'salon'
   });
 
+  // Salon & Subsystem Data State
+  const [salon, setSalon] = useState(null);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [loadingInitial, setLoadingInitial] = useState(true);
+
+  const [appointments, setAppointments] = useState([]);
+  const [queue, setQueue] = useState([]);
+  const [services, setServices] = useState([]);
+  const [staff, setStaff] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [analytics, setAnalytics] = useState({});
+  const [reviewsData, setReviewsData] = useState({});
+  const [blockedSlots, setBlockedSlots] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+
+  // Modals state
+  const [isNewAppointmentOpen, setIsNewAppointmentOpen] = useState(false);
+  const [isAddWalkInOpen, setIsAddWalkInOpen] = useState(false);
+  const [isAddServiceOpen, setIsAddServiceOpen] = useState(false);
+  const [rescheduleAppointment, setRescheduleAppointment] = useState(null);
+
+  // Read URL search params on mount (e.g. ?tab=appointments)
   useEffect(() => {
-    authClient.fetchSession().then((u) => {
-      if (u) setCurrentUser(u);
-    });
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab');
+      if (tabParam) {
+        setActiveTab(tabParam);
+      }
+    }
   }, []);
 
-  const handleLogout = async () => {
-    await authClient.logout();
-    if (onNavigate) {
-      onNavigate('/');
-    } else {
-      window.location.href = '/';
+  // Sync active tab to URL without full reload
+  const handleSelectTab = (tab) => {
+    setActiveTab(tab);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('tab', tab);
+      window.history.replaceState(null, '', url.toString());
     }
   };
 
-  const handleSwitchToCustomer = async () => {
+  // Fetch all initial data from backend
+  const loadDashboardData = useCallback(async () => {
     try {
-      const res = await authClient.switchRole('customer');
-      if (res.user) setCurrentUser(res.user);
-      if (onNavigate) {
-        onNavigate('/customer/home');
-      } else {
-        window.location.href = '/customer/home';
+      // 1. Session user
+      const u = await authClient.fetchSession();
+      if (u) setCurrentUser(u);
+
+      // 2. Salon profile
+      const profRes = await salonClient.fetchProfile();
+      if (profRes && profRes.salon) {
+        setSalon(profRes.salon);
       }
-    } catch {
-      if (onNavigate) onNavigate('/customer/home');
+
+      // 3. Parallel fetch core entities
+      const [
+        aptsRes,
+        queueRes,
+        servicesRes,
+        staffRes,
+        customersRes,
+        analyticsRes,
+        reviewsRes,
+        blockedRes,
+        notifsRes
+      ] = await Promise.all([
+        salonClient.fetchAppointments(),
+        salonClient.fetchQueue(),
+        salonClient.fetchServices(),
+        salonClient.fetchStaff(),
+        salonClient.fetchCustomers(),
+        salonClient.fetchAnalytics('month'),
+        salonClient.fetchReviews(),
+        salonClient.fetchBlockedSlots(),
+        salonClient.fetchNotifications()
+      ]);
+
+      if (aptsRes?.appointments) setAppointments(aptsRes.appointments);
+      if (queueRes?.queue) setQueue(queueRes.queue);
+      if (servicesRes?.services) setServices(servicesRes.services);
+      if (staffRes?.staff) setStaff(staffRes.staff);
+      if (customersRes?.customers) setCustomers(customersRes.customers);
+      if (analyticsRes?.analytics) setAnalytics(analyticsRes.analytics);
+      if (reviewsRes) setReviewsData(reviewsRes);
+      if (blockedRes?.blockedSlots) setBlockedSlots(blockedRes.blockedSlots);
+      if (notifsRes?.notifications) setNotifications(notifsRes.notifications);
+    } catch (err) {
+      console.error('[SalonDashboard] Error loading data:', err);
+    } finally {
+      setLoadingInitial(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, [loadDashboardData]);
+
+  // Periodic silent refresh every 15 seconds for live queue and appointment sync
+  useEffect(() => {
+    const timer = setInterval(() => {
+      salonClient.fetchAppointments().then((res) => {
+        if (res?.appointments) setAppointments(res.appointments);
+      }).catch(() => {});
+      salonClient.fetchQueue().then((res) => {
+        if (res?.queue) setQueue(res.queue);
+      }).catch(() => {});
+    }, 15000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // -----------------------------------------------------------
+  // Action Handlers
+  // -----------------------------------------------------------
+  const handleCreateAppointment = async (formData) => {
+    const res = await salonClient.createAppointment(formData);
+    if (res?.appointment) {
+      setAppointments((prev) => [res.appointment, ...prev]);
+      // Refresh analytics
+      salonClient.fetchAnalytics('month').then((a) => a?.analytics && setAnalytics(a.analytics));
+    }
+    return res;
+  };
+
+  const handleUpdateAppointmentStatus = async (id, status, notes = '') => {
+    const res = await salonClient.updateAppointmentStatus(id, status, notes);
+    if (res?.appointment) {
+      setAppointments((prev) =>
+        prev.map((a) => (a.id === id ? res.appointment : a))
+      );
+      salonClient.fetchAnalytics('month').then((a) => a?.analytics && setAnalytics(a.analytics));
     }
   };
 
-  const displaySalonName = currentUser?.salonName || 'Apex Studio & Grooming';
-  const displayOwnerName = currentUser?.name || 'Salon Partner';
-  const displayInitials = (currentUser?.salonName || currentUser?.name || 'AS')
-    .split(' ')
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
+  const handleRescheduleAppointment = async (id, rescheduleData) => {
+    const res = await salonClient.rescheduleAppointment(id, rescheduleData);
+    if (res?.appointment) {
+      setAppointments((prev) =>
+        prev.map((a) => (a.id === id ? res.appointment : a))
+      );
+    }
+  };
+
+  const handleAddWalkIn = async (walkInData) => {
+    const res = await salonClient.addWalkIn(walkInData);
+    if (res?.entry) {
+      setQueue((prev) => [...prev, res.entry]);
+      salonClient.fetchQueue().then((q) => q?.queue && setQueue(q.queue));
+    }
+  };
+
+  const handleUpdateQueueStatus = async (id, status, reason = '') => {
+    const res = await salonClient.updateQueueStatus(id, status, reason);
+    if (res?.entry) {
+      salonClient.fetchQueue().then((q) => q?.queue && setQueue(q.queue));
+      salonClient.fetchAnalytics('month').then((a) => a?.analytics && setAnalytics(a.analytics));
+    }
+  };
+
+  const handleReorderQueue = async (id, direction) => {
+    const res = await salonClient.reorderQueue(id, direction);
+    if (res?.queue) {
+      setQueue((prev) => {
+        const other = prev.filter((q) => q.status !== 'waiting');
+        return [...other, ...res.queue];
+      });
+      salonClient.fetchQueue().then((q) => q?.queue && setQueue(q.queue));
+    }
+  };
+
+  const handleAddService = async (serviceData) => {
+    const res = await salonClient.addService(serviceData);
+    if (res?.service) {
+      setServices((prev) => [...prev, res.service]);
+    }
+  };
+
+  const handleUpdateService = async (id, serviceData) => {
+    const res = await salonClient.updateService(id, serviceData);
+    if (res?.service) {
+      setServices((prev) => prev.map((s) => (s.id === id ? res.service : s)));
+    }
+  };
+
+  const handleDeleteService = async (id) => {
+    await salonClient.deleteService(id);
+    setServices((prev) => prev.filter((s) => s.id !== id));
+  };
+
+  const handleAddStaff = async (staffData) => {
+    const res = await salonClient.addStaff(staffData);
+    if (res?.staff) {
+      setStaff((prev) => [...prev, res.staff]);
+    }
+  };
+
+  const handleUpdateStaff = async (id, staffData) => {
+    const res = await salonClient.updateStaff(id, staffData);
+    if (res?.staff) {
+      setStaff((prev) => prev.map((st) => (st.id === id ? res.staff : st)));
+    }
+  };
+
+  const handleDeleteStaff = async (id) => {
+    await salonClient.deleteStaff(id);
+    setStaff((prev) => prev.filter((st) => st.id !== id));
+  };
+
+  const handleUpdateSalonProfile = async (profileData) => {
+    const res = await salonClient.updateProfile(profileData);
+    if (res?.salon) {
+      setSalon(res.salon);
+    }
+  };
+
+  const handleUpdateCustomerNotes = async (customerId, notesData) => {
+    await salonClient.updateCustomerNotes(customerId, notesData);
+    salonClient.fetchCustomers().then((c) => c?.customers && setCustomers(c.customers));
+  };
+
+  // If loading
+  if (loadingInitial) {
+    return (
+      <div className="min-h-screen bg-[#F7FBFF] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-[#0EA5E9] border-t-transparent rounded-full animate-spin" />
+          <p className="text-xs font-semibold text-[#64748B]">Loading UPLOOKZ Partner Portal...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If owner has never registered/configured a salon profile, show onboarding wizard
+  if (!salon && (!currentUser?.salonName || currentUser.salonName.trim() === '')) {
+    return (
+      <SalonOnboardingWizard
+        currentUser={currentUser}
+        onComplete={(newSalon) => {
+          setSalon(newSalon);
+          loadDashboardData();
+        }}
+      />
+    );
+  }
+
+  // Compute live counts for sidebar badges
+  const todayStr = '2026-10-28';
+  const todayAppointmentsCount = appointments.filter((a) => a.date === todayStr && a.status !== 'cancelled').length;
+  const waitingQueueCount = queue.filter((q) => q.status === 'waiting').length;
+  const activeStaffCount = staff.filter((s) => s.active).length;
 
   return (
-    <div className="min-h-screen bg-[#F7FBFF] flex flex-col justify-between selection:bg-[#0EA5E9] selection:text-white">
+    <div className="min-h-screen bg-[#F7FBFF] text-[#111827] flex flex-col selection:bg-[#0EA5E9] selection:text-white">
+      
       {/* Top Header */}
-      <header className="bg-white border-b border-[#E2E8F0] sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <a
-              href="/"
-              onClick={(e) => {
-                e.preventDefault();
-                if (onNavigate) onNavigate('/');
-              }}
-              className="flex items-center gap-2.5 group"
-            >
-              <div className="w-8 h-8 rounded-lg bg-[#0EA5E9] flex items-center justify-center text-white shadow-sm transition-transform group-hover:scale-105">
-                <span className="font-bold text-base tracking-tight">U</span>
-              </div>
-              <span className="text-xl font-bold tracking-tight text-[#111827]">
-                UPLOOKZ<span className="text-[#0EA5E9]">.</span>
-              </span>
-            </a>
-            <span className="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#F0F9FF] text-[#0284C7] border border-[#BAE6FD]">
-              Salon Partner Portal
-            </span>
-          </div>
+      <SalonHeader
+        salon={salon}
+        currentUser={currentUser}
+        activeTab={activeTab}
+        setActiveTab={handleSelectTab}
+        onNavigate={onNavigate}
+        onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
+        notifications={notifications}
+        onRefreshNotifications={() => {
+          salonClient.fetchNotifications().then((n) => n?.notifications && setNotifications(n.notifications));
+        }}
+      />
 
-          <div className="flex items-center gap-3 sm:gap-4">
-            {/* Seamless Mode Switcher (Salon Owner <-> Customer without logging out) */}
-            <button
-              onClick={handleSwitchToCustomer}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0EA5E9] bg-[#F0F9FF] hover:bg-[#E0F2FE] border border-[#BAE6FD] px-3 py-1.5 rounded-lg transition-all"
-              title="Switch to Customer Mode"
-            >
-              <UserCheck size={14} />
-              <span className="hidden sm:inline">Switch to</span> Customer Mode
-            </button>
-
-            <div className="flex items-center gap-2.5 pl-3 border-l border-[#E2E8F0]">
-              <div className="w-8 h-8 rounded-xl bg-[#E0F2FE] text-[#0284C7] flex items-center justify-center font-bold text-xs">
-                {displayInitials}
-              </div>
-              <div className="hidden md:block text-left">
-                <p className="text-xs font-semibold text-[#111827]">{displaySalonName}</p>
-                <p className="text-[11px] text-[#64748B]">{displayOwnerName} • Partner</p>
-              </div>
-            </div>
-
-            <button
-              onClick={handleLogout}
-              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-[#64748B] hover:text-red-600 transition-colors py-1.5 px-3 rounded-lg hover:bg-red-50 border border-transparent hover:border-red-100"
-            >
-              <LogOut size={15} />
-              <span className="hidden sm:inline">Log out</span>
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl mx-auto w-full px-5 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
+      {/* Main Container with Sidebar + Dynamic Tab View */}
+      <div className="flex-1 max-w-7xl mx-auto w-full flex">
         
-        {/* Salon Owner Welcome Banner */}
-        <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 sm:p-8 shadow-clean flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-xl">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0]">
-              <span className="w-2 h-2 rounded-full bg-[#16A34A] animate-pulse" />
-              Storefront Online • Accepting Bookings
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#111827]">
-              {displaySalonName} Dashboard
-            </h1>
-            <p className="text-sm sm:text-base text-[#64748B]">
-              Welcome back, {displayOwnerName}. Manage today's schedule, staff allocations, and client service requests.
-            </p>
-          </div>
+        {/* Navigation Sidebar */}
+        <SalonSidebar
+          activeTab={activeTab}
+          setActiveTab={handleSelectTab}
+          stats={{
+            todayAppointmentsCount,
+            waitingQueueCount,
+            servicesCount: services.length,
+            activeStaffCount,
+            rating: reviewsData.averageRating || 4.9
+          }}
+          isMobileOpen={isMobileSidebarOpen}
+          onCloseMobile={() => setIsMobileSidebarOpen(false)}
+        />
 
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              className="btn-lift inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#0EA5E9] hover:bg-[#0284C7] text-white text-sm font-semibold shadow-sm transition-all"
-            >
-              <Plus size={16} />
-              <span>Add Service</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Overview Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {/* Dynamic Tab Body */}
+        <main className="flex-1 px-4 sm:px-6 lg:px-8 py-8 overflow-x-hidden min-w-0">
           
-          <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-clean space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-[#64748B]">Today's Appointments</span>
-              <div className="w-8 h-8 rounded-lg bg-[#F0F9FF] text-[#0EA5E9] flex items-center justify-center">
-                <Calendar size={16} />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-[#111827]">14</p>
-            <p className="text-xs text-[#16A34A] font-medium">↑ 3 new requests today</p>
-          </div>
+          {activeTab === 'overview' && (
+            <SalonOverviewTab
+              salon={salon}
+              currentUser={currentUser}
+              appointments={appointments}
+              queue={queue}
+              analytics={analytics}
+              onOpenNewAppointment={() => setIsNewAppointmentOpen(true)}
+              onOpenAddWalkIn={() => setIsAddWalkInOpen(true)}
+              onOpenAddService={() => setIsAddServiceOpen(true)}
+              setActiveTab={handleSelectTab}
+              onUpdateAppointmentStatus={handleUpdateAppointmentStatus}
+              onUpdateQueueStatus={handleUpdateQueueStatus}
+            />
+          )}
 
-          <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-clean space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-[#64748B]">Salon Rating</span>
-              <div className="w-8 h-8 rounded-lg bg-[#FEF3C7] text-amber-600 flex items-center justify-center">
-                <Star size={16} className="fill-amber-500 text-amber-500" />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-[#111827]">4.9 / 5.0</p>
-            <p className="text-xs text-[#64748B]">Based on 128 verified reviews</p>
-          </div>
+          {activeTab === 'appointments' && (
+            <SalonAppointmentsTab
+              appointments={appointments}
+              services={services}
+              staff={staff}
+              onOpenNewAppointment={() => setIsNewAppointmentOpen(true)}
+              onOpenReschedule={(apt) => setRescheduleAppointment(apt)}
+              onUpdateStatus={handleUpdateAppointmentStatus}
+              onRefresh={loadDashboardData}
+            />
+          )}
 
-          <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-clean space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-[#64748B]">Active Stylists</span>
-              <div className="w-8 h-8 rounded-lg bg-[#F0FDF4] text-[#16A34A] flex items-center justify-center">
-                <Users size={16} />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-[#111827]">6 on Duty</p>
-            <p className="text-xs text-[#64748B]">All chairs operational</p>
-          </div>
+          {activeTab === 'queue' && (
+            <SalonQueueTab
+              queue={queue}
+              staff={staff}
+              services={services}
+              onOpenAddWalkIn={() => setIsAddWalkInOpen(true)}
+              onUpdateQueueStatus={handleUpdateQueueStatus}
+              onReorderQueue={handleReorderQueue}
+            />
+          )}
 
-          <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-clean space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-[#64748B]">Partner Tier</span>
-              <div className="w-8 h-8 rounded-lg bg-[#E0F2FE] text-[#0284C7] flex items-center justify-center">
-                <Store size={16} />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-[#111827]">Verified Pro</p>
-            <p className="text-xs text-[#0284C7] font-medium">UPLOOKZ Featured</p>
-          </div>
+          {activeTab === 'calendar' && (
+            <SalonCalendarTab
+              salon={salon}
+              appointments={appointments}
+              staff={staff}
+              blockedSlots={blockedSlots}
+              onOpenNewAppointment={() => setIsNewAppointmentOpen(true)}
+              onRefresh={loadDashboardData}
+            />
+          )}
 
-        </div>
+          {activeTab === 'services' && (
+            <SalonServicesTab
+              services={services}
+              onAddService={handleAddService}
+              onUpdateService={handleUpdateService}
+              onDeleteService={handleDeleteService}
+            />
+          )}
 
-        {/* Schedule & Services Table */}
-        <div className="bg-white border border-[#E2E8F0] rounded-2xl shadow-clean overflow-hidden">
-          <div className="p-6 border-b border-[#E2E8F0] flex items-center justify-between">
-            <div>
-              <h3 className="text-base font-bold text-[#111827]">Upcoming Schedule for Today</h3>
-              <p className="text-xs text-[#64748B]">Real-time client appointments</p>
-            </div>
-            <span className="text-xs font-medium text-[#0EA5E9] bg-[#F0F9FF] px-2.5 py-1 rounded-md">
-              Live sync active
-            </span>
-          </div>
+          {activeTab === 'staff' && (
+            <SalonStaffTab
+              staff={staff}
+              services={services}
+              appointments={appointments}
+              onAddStaff={handleAddStaff}
+              onUpdateStaff={handleUpdateStaff}
+              onDeleteStaff={handleDeleteStaff}
+            />
+          )}
 
-          <div className="divide-y divide-[#E2E8F0]">
-            {[
-              { client: 'Rahul S.', service: 'Executive Haircut & Styling', time: '11:00 AM', stylist: 'Karan (Chair 1)', status: 'Confirmed' },
-              { client: 'Ananya P.', service: 'Hair Spa & Scalp Therapy', time: '12:30 PM', stylist: 'Priya (Chair 3)', status: 'In Progress' },
-              { client: 'Vikram M.', service: 'Beard Sculpt & Shave', time: '02:00 PM', stylist: 'Amit (Chair 2)', status: 'Confirmed' },
-              { client: 'Sneha R.', service: 'Precision Cut & Blowdry', time: '03:15 PM', stylist: 'Priya (Chair 3)', status: 'Pending Arrival' },
-            ].map((row, idx) => (
-              <div key={idx} className="p-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-[#F8FAFC] transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-[#F0F9FF] text-[#0EA5E9] flex items-center justify-center font-bold text-xs shrink-0">
-                    {row.client.slice(0, 2)}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-[#111827]">{row.client}</p>
-                    <p className="text-xs text-[#64748B]">{row.service}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-6 text-xs text-[#64748B]">
-                  <span className="flex items-center gap-1 font-medium text-[#111827]">
-                    <Clock size={13} className="text-[#0EA5E9]" />
-                    {row.time}
-                  </span>
-                  <span>{row.stylist}</span>
-                  <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0]">
-                    {row.status}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+          {activeTab === 'customers' && (
+            <SalonCustomersTab
+              customers={customers}
+              onUpdateNotes={handleUpdateCustomerNotes}
+            />
+          )}
 
-      </main>
+          {activeTab === 'analytics' && (
+            <SalonAnalyticsTab
+              analytics={analytics}
+            />
+          )}
+
+          {activeTab === 'reviews' && (
+            <SalonReviewsTab
+              reviewsData={reviewsData}
+              onRefresh={() => salonClient.fetchReviews().then((r) => r && setReviewsData(r))}
+            />
+          )}
+
+          {activeTab === 'profile' && (
+            <SalonProfileTab
+              salon={salon}
+              onUpdateSalonProfile={handleUpdateSalonProfile}
+              onRefresh={loadDashboardData}
+            />
+          )}
+
+          {activeTab === 'settings' && (
+            <SalonSettingsTab
+              salon={salon}
+              currentUser={currentUser}
+              onNavigate={onNavigate}
+            />
+          )}
+
+        </main>
+
+      </div>
+
+      {/* Global Modals */}
+      <NewAppointmentModal
+        isOpen={isNewAppointmentOpen}
+        onClose={() => setIsNewAppointmentOpen(false)}
+        onSave={handleCreateAppointment}
+        services={services}
+        staff={staff}
+      />
+
+      <AddWalkInModal
+        isOpen={isAddWalkInOpen}
+        onClose={() => setIsAddWalkInOpen(false)}
+        onSave={handleAddWalkIn}
+        services={services}
+        staff={staff}
+      />
+
+      <ServiceModal
+        isOpen={isAddServiceOpen}
+        onClose={() => setIsAddServiceOpen(false)}
+        onSave={handleAddService}
+        service={null}
+      />
+
+      <RescheduleModal
+        isOpen={Boolean(rescheduleAppointment)}
+        onClose={() => setRescheduleAppointment(null)}
+        onSave={handleRescheduleAppointment}
+        appointment={rescheduleAppointment}
+        staff={staff}
+      />
 
       {/* Footer */}
       <footer className="py-6 border-t border-[#E2E8F0] bg-white text-center text-xs text-[#94A3B8]">
-        <p>© {new Date().getFullYear()} UPLOOKZ. Salon Partner Dashboard.</p>
+        <p>© {new Date().getFullYear()} UPLOOKZ. Complete Salon Management System.</p>
       </footer>
+
     </div>
   );
 }

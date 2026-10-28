@@ -134,17 +134,25 @@ export async function authMiddleware(req, res, next) {
   }
 }
 
+import { salonMiddleware } from './salonMiddleware.js';
+import { customerMiddleware } from './customerMiddleware.js';
+
 /**
- * Vite plugin to attach Auth API
+ * Vite plugin to attach Auth & Salon APIs
  */
 export function uplookzAuthPlugin() {
   return {
-    name: 'uplookz-auth-api',
+    name: 'uplookz-api-plugin',
     configureServer(server) {
       server.middlewares.use('/api/auth', authMiddleware);
+      server.middlewares.use('/api/salon', salonMiddleware);
+      server.middlewares.use('/api/customer', customerMiddleware);
     },
     configurePreviewServer(server) {
       server.middlewares.use('/api/auth', authMiddleware);
+      server.middlewares.use('/api/salon', salonMiddleware);
+      server.middlewares.use('/api/customer', customerMiddleware);
     },
   };
 }
+

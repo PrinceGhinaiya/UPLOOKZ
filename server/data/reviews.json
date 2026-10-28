@@ -1,0 +1,50 @@
+[
+  {
+    "id": "rev_01",
+    "salonId": "salon_apex_01",
+    "customerName": "Aakash Saxena",
+    "rating": 5,
+    "comment": "Best fade and beard line in Bandra! Karan really takes his time and understands textures. Super clean aesthetic.",
+    "date": "2026-10-25",
+    "verifiedVisit": true,
+    "serviceUsed": "Executive Haircut & Styling",
+    "ownerReply": "Thank you so much Aakash! Looking forward to your next visit at Apex Studio.",
+    "ownerReplyDate": "2026-10-25T16:00:00.000Z"
+  },
+  {
+    "id": "rev_02",
+    "salonId": "salon_apex_01",
+    "customerName": "Pooja Marathe",
+    "rating": 5,
+    "comment": "The HydraFacial glow is unreal! Priya is master of her craft and the salon hospitality is top notch.",
+    "date": "2026-10-22",
+    "verifiedVisit": true,
+    "serviceUsed": "Hydra Glow Deep Facial",
+    "ownerReply": "Glad you loved the facial Pooja! See you next month.",
+    "ownerReplyDate": "2026-10-22T19:30:00.000Z"
+  },
+  {
+    "id": "rev_03",
+    "salonId": "salon_apex_01",
+    "customerName": "Ravi Teja",
+    "rating": 4,
+    "comment": "Great haircut by Amit. The live queue was busy on Sunday afternoon, but the coffee made up for the 15 min wait.",
+    "date": "2026-10-18",
+    "verifiedVisit": true,
+    "serviceUsed": "Beard Sculpt & Luxury Shave",
+    "ownerReply": null,
+    "ownerReplyDate": null
+  },
+  {
+    "id": "rev_04",
+    "salonId": "salon_apex_01",
+    "customerName": "Siddharth Roy",
+    "rating": 5,
+    "comment": "Very professional, no rush. Hair spa was intensely relaxing. Will definitely book again through UPLOOKZ.",
+    "date": "2026-10-12",
+    "verifiedVisit": true,
+    "serviceUsed": "Hair Spa & Scalp Detox",
+    "ownerReply": "Cheers Siddharth! Always a pleasure having you.",
+    "ownerReplyDate": "2026-10-12T18:00:00.000Z"
+  }
+]

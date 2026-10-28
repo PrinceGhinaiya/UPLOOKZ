@@ -1,0 +1,261 @@
+[
+  {
+    "id": "apt_101",
+    "salonId": "salon_apex_01",
+    "customerId": "usr_customer_01",
+    "customerName": "John Doe",
+    "customerPhone": "+91 98765 43210",
+    "customerEmail": "john@example.com",
+    "serviceIds": [
+      "srv_01"
+    ],
+    "serviceNames": [
+      "Executive Haircut & Styling"
+    ],
+    "staffId": "stf_01",
+    "staffName": "Karan Malhotra",
+    "date": "2026-10-28",
+    "time": "11:00 AM",
+    "durationMinutes": 45,
+    "totalAmount": 650,
+    "status": "completed",
+    "paymentStatus": "paid",
+    "paymentMethod": "UPI / GPay",
+    "notes": "Low taper fade, texturize top",
+    "createdAt": "2026-10-27T08:00:00.000Z",
+    "updatedAt": "2026-10-28T11:45:00.000Z"
+  },
+  {
+    "id": "apt_102",
+    "salonId": "salon_apex_01",
+    "customerId": "usr_1792086512172_tg46h",
+    "customerName": "Priya Patel",
+    "customerPhone": "+91 91234 56789",
+    "customerEmail": "priya.p@example.com",
+    "serviceIds": [
+      "srv_03"
+    ],
+    "serviceNames": [
+      "Hair Spa & Scalp Detox"
+    ],
+    "staffId": "stf_02",
+    "staffName": "Priya Deshmukh",
+    "date": "2026-10-28",
+    "time": "12:30 PM",
+    "durationMinutes": 60,
+    "totalAmount": 1200,
+    "status": "completed",
+    "paymentStatus": "paid",
+    "paymentMethod": "Credit Card",
+    "notes": "Scalp dryness treatment",
+    "createdAt": "2026-10-27T10:15:00.000Z",
+    "updatedAt": "2026-10-28T13:30:00.000Z"
+  },
+  {
+    "id": "apt_103",
+    "salonId": "salon_apex_01",
+    "customerId": "cust_03",
+    "customerName": "Vikram Mehta",
+    "customerPhone": "+91 98201 44556",
+    "customerEmail": "vikram.m@example.com",
+    "serviceIds": [
+      "srv_02"
+    ],
+    "serviceNames": [
+      "Beard Sculpt & Luxury Shave"
+    ],
+    "staffId": "stf_03",
+    "staffName": "Amit Verma",
+    "date": "2026-10-28",
+    "time": "02:00 PM",
+    "durationMinutes": 30,
+    "totalAmount": 400,
+    "status": "in_service",
+    "paymentStatus": "pending",
+    "paymentMethod": "Cash",
+    "notes": "Sharpen cheeklines",
+    "createdAt": "2026-10-28T07:30:00.000Z",
+    "updatedAt": "2026-10-28T14:00:00.000Z"
+  },
+  {
+    "id": "apt_104",
+    "salonId": "salon_apex_01",
+    "customerId": "cust_04",
+    "customerName": "Sneha Roy",
+    "customerPhone": "+91 98902 33441",
+    "customerEmail": "sneha.roy@example.com",
+    "serviceIds": [
+      "srv_01"
+    ],
+    "serviceNames": [
+      "Executive Haircut & Styling"
+    ],
+    "staffId": "stf_02",
+    "staffName": "Priya Deshmukh",
+    "date": "2026-10-28",
+    "time": "03:15 PM",
+    "durationMinutes": 45,
+    "totalAmount": 650,
+    "status": "confirmed",
+    "paymentStatus": "pending",
+    "paymentMethod": "UPI / GPay",
+    "notes": "Layered trim",
+    "createdAt": "2026-10-28T09:00:00.000Z",
+    "updatedAt": "2026-10-28T09:00:00.000Z"
+  },
+  {
+    "id": "apt_105",
+    "salonId": "salon_apex_01",
+    "customerId": "cust_05",
+    "customerName": "Arjun Nair",
+    "customerPhone": "+91 97654 11223",
+    "customerEmail": "arjun.nair@example.com",
+    "serviceIds": [
+      "srv_04"
+    ],
+    "serviceNames": [
+      "Hydra Glow Deep Facial"
+    ],
+    "staffId": "stf_04",
+    "staffName": "Neha Kulkarni",
+    "date": "2026-10-28",
+    "time": "05:00 PM",
+    "durationMinutes": 60,
+    "totalAmount": 1800,
+    "status": "confirmed",
+    "paymentStatus": "pending",
+    "paymentMethod": "Card",
+    "notes": "Sensitive skin prep",
+    "createdAt": "2026-10-28T10:45:00.000Z",
+    "updatedAt": "2026-10-28T10:45:00.000Z"
+  },
+  {
+    "id": "apt_106",
+    "salonId": "salon_apex_01",
+    "customerId": "cust_06",
+    "customerName": "Rohan Joshi",
+    "customerPhone": "+91 98321 99887",
+    "customerEmail": "rohan.j@example.com",
+    "serviceIds": [
+      "srv_05"
+    ],
+    "serviceNames": [
+      "Royal Grooming Package (Hair + Beard + Facial)"
+    ],
+    "staffId": "stf_01",
+    "staffName": "Karan Malhotra",
+    "date": "2026-10-28",
+    "time": "06:30 PM",
+    "durationMinutes": 105,
+    "totalAmount": 2400,
+    "status": "pending",
+    "paymentStatus": "pending",
+    "paymentMethod": "UPI / GPay",
+    "notes": "Wedding attending tomorrow",
+    "createdAt": "2026-10-28T12:00:00.000Z",
+    "updatedAt": "2026-10-28T12:00:00.000Z"
+  },
+  {
+    "id": "apt_090",
+    "salonId": "salon_apex_01",
+    "customerId": "cust_07",
+    "customerName": "Aditya Birla",
+    "customerPhone": "+91 98111 55667",
+    "customerEmail": "aditya@example.com",
+    "serviceIds": [
+      "srv_05"
+    ],
+    "serviceNames": [
+      "Royal Grooming Package (Hair + Beard + Facial)"
+    ],
+    "staffId": "stf_01",
+    "staffName": "Karan Malhotra",
+    "date": "2026-10-27",
+    "time": "04:00 PM",
+    "durationMinutes": 105,
+    "totalAmount": 2400,
+    "status": "completed",
+    "paymentStatus": "paid",
+    "paymentMethod": "Credit Card",
+    "createdAt": "2026-10-26T11:00:00.000Z",
+    "updatedAt": "2026-10-27T17:45:00.000Z"
+  },
+  {
+    "id": "apt_091",
+    "salonId": "salon_apex_01",
+    "customerId": "cust_08",
+    "customerName": "Manish Sisodia",
+    "customerPhone": "+91 98222 66778",
+    "customerEmail": "manish@example.com",
+    "serviceIds": [
+      "srv_01",
+      "srv_02"
+    ],
+    "serviceNames": [
+      "Executive Haircut & Styling",
+      "Beard Sculpt & Luxury Shave"
+    ],
+    "staffId": "stf_03",
+    "staffName": "Amit Verma",
+    "date": "2026-10-26",
+    "time": "02:30 PM",
+    "durationMinutes": 75,
+    "totalAmount": 1050,
+    "status": "completed",
+    "paymentStatus": "paid",
+    "paymentMethod": "UPI / GPay",
+    "createdAt": "2026-10-25T14:00:00.000Z",
+    "updatedAt": "2026-10-26T15:45:00.000Z"
+  },
+  {
+    "id": "apt_092",
+    "salonId": "salon_apex_01",
+    "customerId": "cust_09",
+    "customerName": "Devika Sen",
+    "customerPhone": "+91 98333 77889",
+    "customerEmail": "devika@example.com",
+    "serviceIds": [
+      "srv_07"
+    ],
+    "serviceNames": [
+      "Keratin Smoothing Treatment"
+    ],
+    "staffId": "stf_02",
+    "staffName": "Priya Deshmukh",
+    "date": "2026-10-25",
+    "time": "11:00 AM",
+    "durationMinutes": 120,
+    "totalAmount": 3500,
+    "status": "completed",
+    "paymentStatus": "paid",
+    "paymentMethod": "UPI / GPay",
+    "createdAt": "2026-10-24T09:00:00.000Z",
+    "updatedAt": "2026-10-25T13:00:00.000Z"
+  },
+  {
+    "id": "apt_093",
+    "salonId": "salon_apex_01",
+    "customerId": "cust_10",
+    "customerName": "Sanjay Dutt",
+    "customerPhone": "+91 98444 88990",
+    "customerEmail": "sanjay@example.com",
+    "serviceIds": [
+      "srv_01"
+    ],
+    "serviceNames": [
+      "Executive Haircut & Styling"
+    ],
+    "staffId": "stf_01",
+    "staffName": "Karan Malhotra",
+    "date": "2026-10-24",
+    "time": "05:30 PM",
+    "durationMinutes": 45,
+    "totalAmount": 650,
+    "status": "cancelled",
+    "paymentStatus": "refunded",
+    "paymentMethod": "UPI / GPay",
+    "notes": "Client cancelled due to emergency",
+    "createdAt": "2026-10-23T16:00:00.000Z",
+    "updatedAt": "2026-10-24T12:00:00.000Z"
+  }
+]

@@ -1,0 +1,42 @@
+[
+  {
+    "id": "notif_01",
+    "salonId": "salon_apex_01",
+    "type": "appointment",
+    "title": "New Appointment Request",
+    "message": "Rohan Joshi booked Royal Grooming Package for 06:30 PM today.",
+    "date": "2026-10-28T12:00:00.000Z",
+    "read": false,
+    "link": "appointments"
+  },
+  {
+    "id": "notif_02",
+    "salonId": "salon_apex_01",
+    "type": "queue",
+    "title": "Walk-In Customer Added",
+    "message": "Kunal Shah joined the live queue for Head & Shoulder Massage.",
+    "date": "2026-10-28T14:25:00.000Z",
+    "read": false,
+    "link": "queue"
+  },
+  {
+    "id": "notif_03",
+    "salonId": "salon_apex_01",
+    "type": "payment",
+    "title": "Payment Received",
+    "message": "Received ₹1,200 via Credit Card for Priya Patel appointment.",
+    "date": "2026-10-28T13:30:00.000Z",
+    "read": true,
+    "link": "analytics"
+  },
+  {
+    "id": "notif_04",
+    "salonId": "salon_apex_01",
+    "type": "review",
+    "title": "New 5-Star Review Received",
+    "message": "Aakash Saxena left a 5-star review: \"Best fade and beard line in Bandra!\"",
+    "date": "2026-10-25T15:30:00.000Z",
+    "read": true,
+    "link": "reviews"
+  }
+]
