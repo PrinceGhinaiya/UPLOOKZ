@@ -1,0 +1,252 @@
+[
+  {
+    "id": "notif_1793287516782_c87190",
+    "salonId": "salon_apex_01",
+    "type": "queue",
+    "title": "Walk-In Added to Queue",
+    "message": "zxcx joined the live queue (Position #1).",
+    "date": "2026-10-29T15:25:16.783Z",
+    "read": false,
+    "link": "queue"
+  },
+  {
+    "id": "notif_1793287472244_6f2c95",
+    "salonId": "salon_apex_01",
+    "type": "appointment",
+    "title": "Appointment Cancelled",
+    "message": "Appointment for Priya Mehta on 2026-10-30 was marked cancelled.",
+    "date": "2026-10-29T15:24:32.245Z",
+    "read": false,
+    "link": "appointments"
+  },
+  {
+    "id": "notif_1793287355867_654c15",
+    "salonId": "salon_apex_01",
+    "type": "appointment",
+    "title": "New Appointment Booked",
+    "message": "Prince Ghinaiya booked Executive Haircut & Styling for 2026-10-30 at 12:00 PM.",
+    "date": "2026-10-29T15:22:35.867Z",
+    "read": false,
+    "link": "appointments"
+  },
+  {
+    "id": "notif_1793287152904_1d0790",
+    "salonId": "salon_apex_01",
+    "type": "appointment",
+    "title": "New Appointment Booked",
+    "message": "Prince Ghinaiya booked Executive Haircut & Styling for 2026-10-30 at 11:00 AM.",
+    "date": "2026-10-29T15:19:12.904Z",
+    "read": false,
+    "link": "appointments"
+  },
+  {
+    "id": "notif_1793286922478_2c33bc",
+    "salonId": "salon_apex_01",
+    "type": "queue",
+    "title": "Walk-In Added to Queue",
+    "message": "Priya Mehta joined the live queue (Position #2).",
+    "date": "2026-10-29T15:15:22.479Z",
+    "read": true,
+    "link": "queue"
+  },
+  {
+    "id": "notif_1793286922446_a86b07",
+    "salonId": "salon_apex_01",
+    "type": "review",
+    "title": "New Customer Review",
+    "message": "Priya Mehta left a 5★ review: \"Exceptional precision cut and wonderful ambiance!...\"",
+    "date": "2026-10-29T15:15:22.446Z",
+    "read": false,
+    "link": "reviews"
+  },
+  {
+    "id": "notif_1793286922405_b2a1c7",
+    "salonId": "salon_apex_01",
+    "type": "appointment",
+    "title": "New Appointment Booked",
+    "message": "Priya Mehta booked Executive Haircut & Styling for 2026-10-30 at 10:00 AM.",
+    "date": "2026-10-29T15:15:22.405Z",
+    "read": false,
+    "link": "appointments"
+  },
+  {
+    "id": "notif_1793286922377_bc1bfc",
+    "salonId": "salon_apex_01",
+    "type": "appointment",
+    "title": "Appointment Cancelled by Customer",
+    "message": "Priya Mehta cancelled appointment on 2026-10-30 at 11:00 AM. Reason: Change of schedule",
+    "date": "2026-10-29T15:15:22.377Z",
+    "read": false,
+    "link": "appointments"
+  },
+  {
+    "id": "notif_1793286922351_c662c9",
+    "salonId": "salon_apex_01",
+    "type": "appointment",
+    "title": "Appointment Rescheduled by Customer",
+    "message": "Priya Mehta moved appointment from 2026-10-30 10:00 AM to 2026-10-30 at 11:00 AM.",
+    "date": "2026-10-29T15:15:22.352Z",
+    "read": false,
+    "link": "appointments"
+  },
+  {
+    "id": "notif_1793286922150_de127f",
+    "salonId": "salon_apex_01",
+    "type": "appointment",
+    "title": "New Appointment Booked",
+    "message": "Priya Mehta booked Executive Haircut & Styling for 2026-10-30 at 10:00 AM.",
+    "date": "2026-10-29T15:15:22.150Z",
+    "read": false,
+    "link": "appointments"
+  },
+  {
+    "id": "notif_1793286871169_b5c62e",
+    "salonId": "salon_apex_01",
+    "type": "queue",
+    "title": "Walk-In Added to Queue",
+    "message": "Priya Mehta joined the live queue (Position #1).",
+    "date": "2026-10-29T15:14:31.169Z",
+    "read": false,
+    "link": "queue"
+  },
+  {
+    "id": "notif_1793286871156_516bbf",
+    "salonId": "salon_apex_01",
+    "type": "appointment",
+    "title": "New Appointment Booked",
+    "message": "Priya Mehta booked Executive Haircut & Styling for 2026-10-30 at 09:00 AM.",
+    "date": "2026-10-29T15:14:31.156Z",
+    "read": false,
+    "link": "appointments"
+  },
+  {
+    "id": "notif_1793286871141_b1d4fc",
+    "salonId": "salon_apex_01",
+    "type": "appointment",
+    "title": "Appointment Cancelled by Customer",
+    "message": "Priya Mehta cancelled appointment on 2026-10-30 at 10:00 AM. Reason: Change of schedule",
+    "date": "2026-10-29T15:14:31.141Z",
+    "read": false,
+    "link": "appointments"
+  },
+  {
+    "id": "notif_1793286871126_7b0772",
+    "salonId": "salon_apex_01",
+    "type": "appointment",
+    "title": "Appointment Rescheduled by Customer",
+    "message": "Priya Mehta moved appointment from 2026-10-30 09:00 AM to 2026-10-30 at 10:00 AM.",
+    "date": "2026-10-29T15:14:31.126Z",
+    "read": false,
+    "link": "appointments"
+  },
+  {
+    "id": "notif_1793286870876_ea94f5",
+    "salonId": "salon_apex_01",
+    "type": "appointment",
+    "title": "New Appointment Booked",
+    "message": "Priya Mehta booked Executive Haircut & Styling for 2026-10-30 at 09:00 AM.",
+    "date": "2026-10-29T15:14:30.876Z",
+    "read": false,
+    "link": "appointments"
+  },
+  {
+    "id": "notif_1793273987845_7661e1",
+    "salonId": "salon_apex_01",
+    "type": "appointment",
+    "title": "New Appointment Booked",
+    "message": ",, booked Executive Haircut & Styling for 2026-11-06 at 04:00 PM.",
+    "date": "2026-10-29T11:39:47.845Z",
+    "read": true,
+    "link": "appointments"
+  },
+  {
+    "id": "notif_1793273946749_8c2920",
+    "salonId": "salon_apex_01",
+    "type": "appointment",
+    "title": "New Appointment Booked",
+    "message": "nn booked Hair Spa & Scalp Detox for 2026-10-31 at 04:00 PM.",
+    "date": "2026-10-29T11:39:06.749Z",
+    "read": true,
+    "link": "appointments"
+  },
+  {
+    "id": "notif_1793273930076_7ae136",
+    "salonId": "salon_apex_01",
+    "type": "appointment",
+    "title": "New Appointment Booked",
+    "message": "nn booked Hair Spa & Scalp Detox for 2026-10-31 at 04:00 PM.",
+    "date": "2026-10-29T11:38:50.077Z",
+    "read": false,
+    "link": "appointments"
+  },
+  {
+    "id": "notif_1793273902285_eed968",
+    "salonId": "salon_apex_01",
+    "type": "appointment",
+    "title": "New Appointment Booked",
+    "message": "nn booked Hair Spa & Scalp Detox for 2026-10-31 at 04:00 PM.",
+    "date": "2026-10-29T11:38:22.285Z",
+    "read": false,
+    "link": "appointments"
+  },
+  {
+    "id": "notif_1793258151993_37b73a",
+    "salonId": "salon_apex_01",
+    "type": "appointment",
+    "title": "New Appointment Booked",
+    "message": "Prince Ghinaiya booked Executive Haircut & Styling for 2026-10-31 at 04:30 PM.",
+    "date": "2026-10-29T07:15:51.993Z",
+    "read": false,
+    "link": "appointments"
+  },
+  {
+    "id": "notif_1793253419989_2488e2",
+    "salonId": "salon_apex_01",
+    "type": "queue",
+    "title": "Walk-In Added to Queue",
+    "message": "df joined the live queue (Position #3).",
+    "date": "2026-10-29T05:56:59.989Z",
+    "read": true,
+    "link": "queue"
+  },
+  {
+    "id": "notif_01",
+    "salonId": "salon_apex_01",
+    "type": "appointment",
+    "title": "New Appointment Request",
+    "message": "Rohan Joshi booked Royal Grooming Package for 06:30 PM today.",
+    "date": "2026-10-28T12:00:00.000Z",
+    "read": true,
+    "link": "appointments"
+  },
+  {
+    "id": "notif_02",
+    "salonId": "salon_apex_01",
+    "type": "queue",
+    "title": "Walk-In Customer Added",
+    "message": "Kunal Shah joined the live queue for Head & Shoulder Massage.",
+    "date": "2026-10-28T14:25:00.000Z",
+    "read": true,
+    "link": "queue"
+  },
+  {
+    "id": "notif_03",
+    "salonId": "salon_apex_01",
+    "type": "payment",
+    "title": "Payment Received",
+    "message": "Received ₹1,200 via Credit Card for Priya Patel appointment.",
+    "date": "2026-10-28T13:30:00.000Z",
+    "read": true,
+    "link": "analytics"
+  },
+  {
+    "id": "notif_04",
+    "salonId": "salon_apex_01",
+    "type": "review",
+    "title": "New 5-Star Review Received",
+    "message": "Aakash Saxena left a 5-star review: \"Best fade and beard line in Bandra!\"",
+    "date": "2026-10-25T15:30:00.000Z",
+    "read": true,
+    "link": "reviews"
+  }
+]

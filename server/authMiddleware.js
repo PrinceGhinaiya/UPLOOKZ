@@ -136,9 +136,10 @@ export async function authMiddleware(req, res, next) {
 
 import { salonMiddleware } from './salonMiddleware.js';
 import { customerMiddleware } from './customerMiddleware.js';
+import { paymentMiddleware } from './paymentMiddleware.js';
 
 /**
- * Vite plugin to attach Auth & Salon APIs
+ * Vite plugin to attach Auth, Salon, Customer & Payment APIs
  */
 export function uplookzAuthPlugin() {
   return {
@@ -147,11 +148,13 @@ export function uplookzAuthPlugin() {
       server.middlewares.use('/api/auth', authMiddleware);
       server.middlewares.use('/api/salon', salonMiddleware);
       server.middlewares.use('/api/customer', customerMiddleware);
+      server.middlewares.use('/api/payment', paymentMiddleware);
     },
     configurePreviewServer(server) {
       server.middlewares.use('/api/auth', authMiddleware);
       server.middlewares.use('/api/salon', salonMiddleware);
       server.middlewares.use('/api/customer', customerMiddleware);
+      server.middlewares.use('/api/payment', paymentMiddleware);
     },
   };
 }

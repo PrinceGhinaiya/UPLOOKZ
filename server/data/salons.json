@@ -52,10 +52,155 @@
     },
     "logo": "",
     "gallery": [],
-    "rating": 4.9,
-    "reviewCount": 128,
+    "rating": 4.8,
+    "reviewCount": 5,
     "verified": true,
     "active": true,
-    "createdAt": "2026-01-12T14:30:00.000Z"
+    "createdAt": "2026-01-12T14:30:00.000Z",
+    "updatedAt": "2026-10-29T11:41:20.198Z"
+  },
+  {
+    "id": "salon_1793277086829_00ecb9",
+    "ownerId": "usr_1793277086828",
+    "name": "Velvet Grooming Lounge",
+    "tagline": "Premium Styling & Grooming",
+    "description": "Welcome to our salon. We offer top tier styling and grooming services.",
+    "phone": "+91 91234 56789",
+    "email": "owner_1793277082308@test.uplookz.com",
+    "address": "",
+    "city": "Mumbai, Juhu",
+    "state": "Maharashtra",
+    "pincode": "400001",
+    "openingTime": "09:00 AM",
+    "closingTime": "09:00 PM",
+    "workingDays": [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday"
+    ],
+    "holidays": [],
+    "amenities": [
+      "Air Conditioning",
+      "Wi-Fi",
+      "UPI & Card Accepted"
+    ],
+    "specialties": [
+      "Haircuts",
+      "Styling"
+    ],
+    "policies": {
+      "cancellationHours": 2,
+      "cancellationPolicy": "Free cancellation up to 2 hours prior to appointment.",
+      "lateArrivalMinutes": 15,
+      "lateArrivalPolicy": "Grace period of 15 minutes applies.",
+      "walkInPolicy": "Live queue priority applies."
+    },
+    "logo": "",
+    "gallery": [],
+    "rating": 5,
+    "reviewCount": 0,
+    "verified": true,
+    "active": true,
+    "createdAt": "2026-10-29T12:31:26.829Z"
+  },
+  {
+    "id": "salon_1793286874324_fa672b",
+    "ownerId": "temp_1793286874303",
+    "name": "Velvet Grooming Lounge",
+    "tagline": "Premium Styling & Grooming",
+    "description": "Welcome to our salon. We offer top tier styling and grooming services.",
+    "phone": "+91 91234 56789",
+    "email": "owner_1793286871212@test.uplookz.com",
+    "address": "",
+    "city": "Mumbai, Juhu",
+    "state": "Maharashtra",
+    "pincode": "400001",
+    "openingTime": "09:00 AM",
+    "closingTime": "09:00 PM",
+    "workingDays": [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday"
+    ],
+    "holidays": [],
+    "amenities": [
+      "Air Conditioning",
+      "Wi-Fi",
+      "UPI & Card Accepted"
+    ],
+    "specialties": [
+      "Haircuts",
+      "Styling"
+    ],
+    "policies": {
+      "cancellationHours": 2,
+      "cancellationPolicy": "Free cancellation up to 2 hours prior to appointment.",
+      "lateArrivalMinutes": 15,
+      "lateArrivalPolicy": "Grace period of 15 minutes applies.",
+      "walkInPolicy": "Live queue priority applies."
+    },
+    "logo": "",
+    "gallery": [],
+    "rating": 5,
+    "reviewCount": 0,
+    "verified": true,
+    "active": true,
+    "createdAt": "2026-10-29T15:14:34.325Z"
+  },
+  {
+    "id": "salon_1793286926243_d43f0c",
+    "ownerId": "temp_1793286926222",
+    "name": "Velvet Grooming Lounge",
+    "tagline": "Premium Styling & Grooming",
+    "description": "Welcome to our salon. We offer top tier styling and grooming services.",
+    "phone": "+91 91234 56789",
+    "email": "owner_1793286922563@test.uplookz.com",
+    "address": "",
+    "city": "Mumbai, Juhu",
+    "state": "Maharashtra",
+    "pincode": "400001",
+    "openingTime": "09:00 AM",
+    "closingTime": "09:00 PM",
+    "workingDays": [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday"
+    ],
+    "holidays": [],
+    "amenities": [
+      "Air Conditioning",
+      "Wi-Fi",
+      "UPI & Card Accepted"
+    ],
+    "specialties": [
+      "Haircuts",
+      "Styling"
+    ],
+    "policies": {
+      "cancellationHours": 2,
+      "cancellationPolicy": "Free cancellation up to 2 hours prior to appointment.",
+      "lateArrivalMinutes": 15,
+      "lateArrivalPolicy": "Grace period of 15 minutes applies.",
+      "walkInPolicy": "Live queue priority applies."
+    },
+    "logo": "",
+    "gallery": [],
+    "rating": 5,
+    "reviewCount": 0,
+    "verified": true,
+    "active": true,
+    "createdAt": "2026-10-29T15:15:26.244Z"
   }
 ]

@@ -13,9 +13,51 @@ import {
   AlertCircle,
   Plus,
   Trash2,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Loader2
 } from 'lucide-react';
 import { salonClient } from '../../services/salonClient';
+
+/**
+ * Client-side canvas image compression to ensure instant uploads
+ * and eliminate server payload limits.
+ */
+function compressImage(file, maxWidth = 1600, quality = 0.85) {
+  return new Promise((resolve, reject) => {
+    // If SVG or gif, return as is
+    if (file.type === 'image/svg+xml' || file.type === 'image/gif') {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onerror = () => resolve(e.target.result); // Fallback to raw base64 if decoding fails
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        resolve(dataUrl);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 export default function SalonProfileTab({ salon, onUpdateSalonProfile, onRefresh }) {
   const [name, setName] = useState('');
@@ -42,6 +84,8 @@ export default function SalonProfileTab({ salon, onUpdateSalonProfile, onRefresh
 
   const [newSpecialtyInput, setNewSpecialtyInput] = useState('');
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadProgressText, setUploadProgressText] = useState('');
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [error, setError] = useState('');
 
@@ -110,27 +154,111 @@ export default function SalonProfileTab({ salon, onUpdateSalonProfile, onRefresh
     setSpecialties(specialties.filter((s) => s !== item));
   };
 
-  // Image Upload Handler
-  const handleImageUpload = async (e, type = 'gallery') => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const buildCurrentPayload = (overrides = {}) => ({
+    name: name.trim(),
+    tagline: tagline.trim(),
+    description: description.trim(),
+    phone: phone.trim(),
+    email: email.trim(),
+    address: address.trim(),
+    city: city.trim(),
+    state: state.trim(),
+    pincode: pincode.trim(),
+    openingTime,
+    closingTime,
+    workingDays,
+    amenities,
+    specialties,
+    policies: {
+      cancellationHours: parseInt(cancellationHours, 10) || 2,
+      cancellationPolicy: cancellationPolicy.trim(),
+      lateArrivalMinutes: parseInt(lateArrivalMinutes, 10) || 15,
+      lateArrivalPolicy: lateArrivalPolicy.trim(),
+      walkInPolicy: walkInPolicy.trim()
+    },
+    logo,
+    gallery,
+    ...overrides
+  });
 
-    const reader = new FileReader();
-    reader.onload = async () => {
-      try {
-        const res = await salonClient.uploadImage(reader.result, file.name);
+  // Image Upload Handler with client-side compression and immediate auto-save
+  const handleImageUpload = async (e, type = 'gallery') => {
+    const fileList = Array.from(e.target.files || []);
+    if (fileList.length === 0) return;
+    e.target.value = ''; // Reset file input so same photo can be re-selected
+
+    setUploadingImage(true);
+    setUploadProgressText(fileList.length > 1 ? `Uploading ${fileList.length} photos...` : 'Uploading photo...');
+    setError('');
+
+    try {
+      const uploadedUrls = [];
+      for (let i = 0; i < fileList.length; i++) {
+        const file = fileList[i];
+        if (fileList.length > 1) {
+          setUploadProgressText(`Optimizing & uploading ${i + 1}/${fileList.length}...`);
+        }
+        const compressedBase64 = await compressImage(file);
+        const res = await salonClient.uploadImage(compressedBase64, file.name);
         if (res.success && res.url) {
-          if (type === 'logo') {
-            setLogo(res.url);
-          } else {
-            setGallery((prev) => [...prev, res.url]);
+          uploadedUrls.push(res.url);
+        }
+      }
+
+      if (uploadedUrls.length > 0) {
+        if (type === 'logo') {
+          const newLogo = uploadedUrls[0];
+          setLogo(newLogo);
+          if (onUpdateSalonProfile) {
+            await onUpdateSalonProfile(buildCurrentPayload({ logo: newLogo }));
+          }
+        } else {
+          const newGallery = [...gallery, ...uploadedUrls];
+          setGallery(newGallery);
+          if (onUpdateSalonProfile) {
+            await onUpdateSalonProfile(buildCurrentPayload({ gallery: newGallery }));
           }
         }
-      } catch (err) {
-        alert(err.message || 'Image upload failed.');
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 4000);
+        if (onRefresh) onRefresh();
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error('Image upload failed:', err);
+      setError(err.message || 'Image upload failed. Please try a different photo.');
+    } finally {
+      setUploadingImage(false);
+      setUploadProgressText('');
+    }
+  };
+
+  const handleRemovePhoto = async (indexToRemove) => {
+    const updatedGallery = gallery.filter((_, i) => i !== indexToRemove);
+    setGallery(updatedGallery);
+    if (onUpdateSalonProfile) {
+      try {
+        await onUpdateSalonProfile(buildCurrentPayload({ gallery: updatedGallery }));
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 3000);
+        if (onRefresh) onRefresh();
+      } catch (err) {
+        console.error('Failed to update gallery on delete:', err);
+      }
+    }
+  };
+
+  const handleRemoveLogo = async () => {
+    setLogo('');
+    if (onUpdateSalonProfile) {
+      try {
+        await onUpdateSalonProfile(buildCurrentPayload({ logo: '' }));
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 3000);
+        if (onRefresh) onRefresh();
+      } catch (err) {
+        console.error('Failed to delete logo:', err);
+      }
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -145,31 +273,7 @@ export default function SalonProfileTab({ salon, onUpdateSalonProfile, onRefresh
     setSaveSuccess(false);
 
     try {
-      await onUpdateSalonProfile({
-        name: name.trim(),
-        tagline: tagline.trim(),
-        description: description.trim(),
-        phone: phone.trim(),
-        email: email.trim(),
-        address: address.trim(),
-        city: city.trim(),
-        state: state.trim(),
-        pincode: pincode.trim(),
-        openingTime,
-        closingTime,
-        workingDays,
-        amenities,
-        specialties,
-        policies: {
-          cancellationHours: parseInt(cancellationHours, 10),
-          cancellationPolicy: cancellationPolicy.trim(),
-          lateArrivalMinutes: parseInt(lateArrivalMinutes, 10),
-          lateArrivalPolicy: lateArrivalPolicy.trim(),
-          walkInPolicy: walkInPolicy.trim()
-        },
-        logo,
-        gallery
-      });
+      await onUpdateSalonProfile(buildCurrentPayload());
 
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 4000);
@@ -221,6 +325,67 @@ export default function SalonProfileTab({ salon, onUpdateSalonProfile, onRefresh
 
       <form onSubmit={handleSubmit} className="space-y-6">
         
+        {/* Section 0: Brand Logo & Main Storefront Cover */}
+        <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-clean space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h3 className="text-sm font-bold text-[#111827] flex items-center gap-2">
+                <ImageIcon size={16} className="text-[#0EA5E9]" />
+                Salon Brand Logo & Storefront Photo
+              </h3>
+              <p className="text-xs text-[#64748B]">
+                This primary photo is displayed on your salon header and customer discovery cards.
+              </p>
+            </div>
+            {uploadingImage && (
+              <span className="inline-flex items-center gap-1.5 text-xs text-[#0EA5E9] font-semibold bg-[#E0F2FE] px-3 py-1 rounded-full animate-pulse">
+                <Loader2 size={13} className="animate-spin" />
+                {uploadProgressText || 'Uploading image...'}
+              </span>
+            )}
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center gap-6 pt-2">
+            <div className="relative w-28 h-28 rounded-2xl border-2 border-[#E2E8F0] overflow-hidden bg-[#F8FAFC] flex items-center justify-center shrink-0 shadow-sm group">
+              {logo ? (
+                <>
+                  <img src={logo} alt="Salon Brand Logo" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={handleRemoveLogo}
+                    className="absolute top-1 right-1 p-1.5 bg-red-600 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                    title="Remove Logo"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </>
+              ) : (
+                <div className="text-center p-2 text-[#94A3B8]">
+                  <Store size={28} className="mx-auto mb-1 text-[#CBD5E1]" />
+                  <span className="text-[11px] font-medium">No Logo</span>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2 text-xs text-[#64748B]">
+              <label className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#0EA5E9] text-white font-semibold cursor-pointer hover:bg-[#0284C7] transition-all shadow-sm">
+                <Upload size={14} />
+                <span>{logo ? 'Change Brand Photo' : 'Upload Brand Photo'}</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  disabled={uploadingImage}
+                  onChange={(e) => handleImageUpload(e, 'logo')}
+                  className="hidden"
+                />
+              </label>
+              <p className="text-[11px]">
+                Recommended: Square or 4:3 high-quality image (JPG, PNG, or WebP). Auto-compressed on upload.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Section 1: Basic Brand Identity */}
         <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-clean space-y-4">
           <h3 className="text-sm font-bold text-[#111827] flex items-center gap-2">
@@ -523,31 +688,57 @@ export default function SalonProfileTab({ salon, onUpdateSalonProfile, onRefresh
 
         {/* Section 7: Gallery & Image Upload */}
         <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-clean space-y-4">
-          <h3 className="text-sm font-bold text-[#111827] flex items-center gap-2">
-            <ImageIcon size={16} className="text-[#0EA5E9]" />
-            Salon Storefront Photos & Gallery
-          </h3>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h3 className="text-sm font-bold text-[#111827] flex items-center gap-2">
+                <ImageIcon size={16} className="text-[#0EA5E9]" />
+                Salon Interior & Work Gallery
+              </h3>
+              <p className="text-xs text-[#64748B]">
+                Upload photos of your studio interior, styling stations, and hairstyles. Photos auto-save to your profile immediately!
+              </p>
+            </div>
+            {uploadingImage && (
+              <span className="inline-flex items-center gap-1.5 text-xs text-[#0EA5E9] font-semibold bg-[#E0F2FE] px-3 py-1 rounded-full animate-pulse">
+                <Loader2 size={13} className="animate-spin" />
+                {uploadProgressText || 'Uploading...'}
+              </span>
+            )}
+          </div>
 
-          <div className="flex flex-wrap gap-4 items-center">
+          <div className="flex flex-wrap gap-4 items-center pt-2">
             {gallery.map((imgUrl, idx) => (
-              <div key={idx} className="relative w-28 h-28 rounded-xl overflow-hidden border border-[#E2E8F0] group">
-                <img src={imgUrl} alt="Salon preview" className="w-full h-full object-cover" />
+              <div key={idx} className="relative w-32 h-32 rounded-xl overflow-hidden border border-[#E2E8F0] shadow-sm group bg-[#F8FAFC]">
+                <img src={imgUrl} alt={`Salon preview ${idx + 1}`} className="w-full h-full object-cover" />
                 <button
                   type="button"
-                  onClick={() => setGallery(gallery.filter((_, i) => i !== idx))}
-                  className="absolute top-1 right-1 p-1 bg-red-600 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={() => handleRemovePhoto(idx)}
+                  className="absolute top-1.5 right-1.5 p-1.5 bg-red-600 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                  title="Remove photo"
                 >
-                  <Trash2 size={12} />
+                  <Trash2 size={13} />
                 </button>
               </div>
             ))}
 
-            <label className="w-28 h-28 rounded-xl border-2 border-dashed border-[#CBD5E1] hover:border-[#0EA5E9] flex flex-col items-center justify-center text-center p-2 cursor-pointer transition-colors text-xs text-[#64748B]">
-              <Upload size={18} className="text-[#0EA5E9] mb-1" />
-              <span>Upload Photo</span>
+            <label className={`w-32 h-32 rounded-xl border-2 border-dashed ${uploadingImage ? 'border-amber-400 bg-amber-50 cursor-wait' : 'border-[#CBD5E1] hover:border-[#0EA5E9] cursor-pointer bg-[#F8FAFC]'} flex flex-col items-center justify-center text-center p-3 transition-colors text-xs text-[#64748B]`}>
+              {uploadingImage ? (
+                <>
+                  <Loader2 size={22} className="text-amber-600 animate-spin mb-1" />
+                  <span className="text-[11px] font-semibold text-amber-700">Uploading...</span>
+                </>
+              ) : (
+                <>
+                  <Upload size={22} className="text-[#0EA5E9] mb-1" />
+                  <span className="font-semibold text-[#111827]">Add Photos</span>
+                  <span className="text-[10px] text-[#94A3B8] mt-0.5">JPG / PNG / WebP</span>
+                </>
+              )}
               <input
                 type="file"
                 accept="image/*"
+                multiple
+                disabled={uploadingImage}
                 onChange={(e) => handleImageUpload(e, 'gallery')}
                 className="hidden"
               />

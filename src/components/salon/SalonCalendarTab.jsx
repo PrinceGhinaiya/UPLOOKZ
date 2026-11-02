@@ -22,7 +22,14 @@ export default function SalonCalendarTab({
   onOpenNewAppointment,
   onRefresh
 }) {
-  const [selectedDate, setSelectedDate] = useState('2026-10-28');
+  const getTodayStr = () => {
+    try {
+      return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+    } catch {
+      return new Date().toISOString().split('T')[0];
+    }
+  };
+  const [selectedDate, setSelectedDate] = useState(getTodayStr());
   const [viewType, setViewType] = useState('day'); // 'day' | 'week'
   const [showBlockModal, setShowBlockModal] = useState(false);
   const [blockStartTime, setBlockStartTime] = useState('01:30 PM');
@@ -127,7 +134,7 @@ export default function SalonCalendarTab({
             <ChevronLeft size={16} />
           </button>
           <button
-            onClick={() => setSelectedDate('2026-10-28')}
+            onClick={() => setSelectedDate(getTodayStr())}
             className="px-2.5 py-1 text-xs font-semibold text-[#0284C7] bg-[#F0F9FF] border border-[#BAE6FD] rounded-lg"
           >
             Today

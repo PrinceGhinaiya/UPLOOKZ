@@ -146,6 +146,19 @@ export const salonClient = {
     return handleResponse(res);
   },
 
+  async recordAppointmentPayment(id, paymentData = {}) {
+    const res = await fetch(`/api/salon/appointments/${id}/payment`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({
+        paymentStatus: paymentData.paymentStatus || 'paid',
+        paymentMethod: paymentData.paymentMethod || 'Cash',
+        amount: paymentData.amount
+      })
+    });
+    return handleResponse(res);
+  },
+
   async rescheduleAppointment(id, rescheduleData) {
     const res = await fetch(`/api/salon/appointments/${id}/reschedule`, {
       method: 'POST',
@@ -204,8 +217,11 @@ export const salonClient = {
   },
 
   // 7. Analytics
-  async fetchAnalytics(timeframe = 'month') {
-    const res = await fetch(`/api/salon/analytics?timeframe=${timeframe}`, {
+  async fetchAnalytics(timeframe = 'month', options = {}) {
+    const params = new URLSearchParams({ timeframe });
+    if (options.startDate) params.append('startDate', options.startDate);
+    if (options.endDate) params.append('endDate', options.endDate);
+    const res = await fetch(`/api/salon/analytics?${params.toString()}`, {
       headers: getHeaders()
     });
     return handleResponse(res);
@@ -283,6 +299,25 @@ export const salonClient = {
   },
 
   // 12. Customer-facing endpoints
+  async fetchCustomerSalons(params = {}) {
+    const qs = new URLSearchParams(params).toString();
+    const url = qs ? `/api/customer/salons?${qs}` : '/api/customer/salons';
+    const res = await fetch(url, { headers: getHeaders() });
+    return handleResponse(res);
+  },
+
+  async fetchCustomerSalonDetails(salonId) {
+    const res = await fetch(`/api/customer/salons/${salonId}`, { headers: getHeaders() });
+    return handleResponse(res);
+  },
+
+  async fetchAvailableSlots(salonId, date, duration = 30, staffId = '') {
+    const params = new URLSearchParams({ date, duration: String(duration) });
+    if (staffId) params.append('staffId', staffId);
+    const res = await fetch(`/api/customer/salons/${salonId}/slots?${params.toString()}`, { headers: getHeaders() });
+    return handleResponse(res);
+  },
+
   async fetchCustomerAppointments() {
     const res = await fetch('/api/customer/appointments', { headers: getHeaders() });
     return handleResponse(res);
@@ -297,8 +332,36 @@ export const salonClient = {
     return handleResponse(res);
   },
 
-  async fetchCustomerQueueStatus() {
-    const res = await fetch('/api/customer/queue/status', { headers: getHeaders() });
+  async cancelCustomerAppointment(appointmentId, reason = '') {
+    const res = await fetch(`/api/customer/appointments/${appointmentId}/cancel`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ reason })
+    });
+    return handleResponse(res);
+  },
+
+  async rescheduleCustomerAppointment(appointmentId, date, time, staffId = null) {
+    const res = await fetch(`/api/customer/appointments/${appointmentId}/reschedule`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ date, time, staffId })
+    });
+    return handleResponse(res);
+  },
+
+  async submitCustomerReview(reviewData) {
+    const res = await fetch('/api/customer/reviews', {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(reviewData)
+    });
+    return handleResponse(res);
+  },
+
+  async fetchCustomerQueueStatus(salonId = '') {
+    const url = salonId ? `/api/customer/queue/status?salonId=${salonId}` : '/api/customer/queue/status';
+    const res = await fetch(url, { headers: getHeaders() });
     return handleResponse(res);
   },
 
@@ -311,8 +374,43 @@ export const salonClient = {
     return handleResponse(res);
   },
 
-  async fetchCustomerSalonInfo() {
-    const res = await fetch('/api/customer/salon-info', { headers: getHeaders() });
+  async fetchCustomerSalonInfo(salonId = '') {
+    const url = salonId ? `/api/customer/salons/${salonId}` : '/api/customer/salon-info';
+    const res = await fetch(url, { headers: getHeaders() });
+    return handleResponse(res);
+  },
+
+  async fetchSearchSuggestions(query = '') {
+    const url = `/api/customer/search/suggestions?q=${encodeURIComponent(query)}`;
+    const res = await fetch(url, { headers: getHeaders() });
+    return handleResponse(res);
+  },
+
+  async fetchFavorites() {
+    const res = await fetch('/api/customer/favorites', { headers: getHeaders() });
+    return handleResponse(res);
+  },
+
+  async toggleFavorite(salonId) {
+    const res = await fetch('/api/customer/favorites/toggle', {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ salonId })
+    });
+    return handleResponse(res);
+  },
+
+  async fetchRecentlyViewed() {
+    const res = await fetch('/api/customer/recently-viewed', { headers: getHeaders() });
+    return handleResponse(res);
+  },
+
+  async recordRecentlyViewed(salonId) {
+    const res = await fetch('/api/customer/recently-viewed', {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ salonId })
+    });
     return handleResponse(res);
   }
 };

@@ -12,6 +12,7 @@ export default function Navbar({ onNavigate }) {
   }, []);
 
   const navLinks = [
+    { label: 'Find Salons', href: '/salons', isRoute: true },
     { label: 'How It Works', href: '#how-it-works' },
     { label: 'For Salons', href: '#for-salons' },
     { label: 'About', href: '#about' },
@@ -45,6 +46,11 @@ export default function Navbar({ onNavigate }) {
             <a
               key={link.label}
               href={link.href}
+              onClick={(e) => {
+                if (link.isRoute) {
+                  onNavigate(e, link.href, link.label);
+                }
+              }}
               className={`transition-colors duration-200 ${
                 scrolled
                   ? 'text-[#64748B] hover:text-[#111827]'
@@ -101,7 +107,12 @@ export default function Navbar({ onNavigate }) {
               <a
                 key={link.label}
                 href={link.href}
-                onClick={() => setMobileMenuOpen(false)}
+                onClick={(e) => {
+                  setMobileMenuOpen(false);
+                  if (link.isRoute) {
+                    onNavigate(e, link.href, link.label);
+                  }
+                }}
                 className="text-[#64748B] hover:text-[#111827] font-medium py-2 text-[15px] transition-colors"
               >
                 {link.label}

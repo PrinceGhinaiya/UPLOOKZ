@@ -1,5 +1,20 @@
 [
   {
+    "id": "rev_1793286922439_9fb839",
+    "salonId": "salon_apex_01",
+    "appointmentId": "apt_1793286922404_92d86a",
+    "customerId": "usr_1793286918945_smkp1",
+    "customerName": "Priya Mehta",
+    "rating": 5,
+    "comment": "Exceptional precision cut and wonderful ambiance!",
+    "date": "2026-10-29",
+    "verifiedVisit": true,
+    "serviceUsed": "Executive Haircut & Styling",
+    "ownerReply": null,
+    "ownerReplyDate": null,
+    "createdAt": "2026-10-29T15:15:22.439Z"
+  },
+  {
     "id": "rev_01",
     "salonId": "salon_apex_01",
     "customerName": "Aakash Saxena",

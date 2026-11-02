@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { Store, User, Mail, Phone, MapPin, ArrowLeft, ArrowRight, ShieldCheck, Check } from 'lucide-react';
+import { Store, User, Mail, Phone, MapPin, ArrowLeft, ArrowRight, ShieldCheck, Check, Loader2 } from 'lucide-react';
+import { salonClient } from '../services/salonClient';
+import { authClient } from '../services/authClient';
 
 export default function SalonRegister({ onNavigate }) {
   const [salonName, setSalonName] = useState('');
@@ -8,16 +10,44 @@ export default function SalonRegister({ onNavigate }) {
   const [phone, setPhone] = useState('');
   const [city, setCity] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!salonName.trim() || !ownerName.trim() || !email.trim() || !phone.trim()) {
       setError('Please fill in all required salon details.');
       return;
     }
-    // Route to Salon Dashboard
-    if (onNavigate) {
-      onNavigate('/salon/dashboard');
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const res = await salonClient.createSalon({
+        name: salonName.trim(),
+        ownerName: ownerName.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+        city: city.trim() || 'Mumbai',
+        address: city.trim() || 'Mumbai'
+      });
+
+      // Update session if user logged in
+      const currentUser = authClient.getStoredUser();
+      if (currentUser) {
+        currentUser.roles = currentUser.roles || [];
+        if (!currentUser.roles.includes('salon')) currentUser.roles.push('salon');
+        currentUser.activeRole = 'salon';
+        currentUser.salonName = salonName.trim();
+        authClient.setSession(authClient.getToken(), currentUser);
+      }
+
+      setIsLoading(false);
+      if (onNavigate) {
+        onNavigate('/salon/dashboard');
+      }
+    } catch (err) {
+      setIsLoading(false);
+      setError(err.message || 'Failed to register salon. Please try again.');
     }
   };
 
@@ -160,10 +190,20 @@ export default function SalonRegister({ onNavigate }) {
               <div className="pt-2">
                 <button
                   type="submit"
-                  className="btn-lift w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-[#0EA5E9] hover:bg-[#0284C7] text-white font-semibold text-sm shadow-md transition-all"
+                  disabled={isLoading}
+                  className="btn-lift w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-[#0EA5E9] hover:bg-[#0284C7] disabled:bg-[#94A3B8] disabled:cursor-not-allowed text-white font-semibold text-sm shadow-md transition-all"
                 >
-                  <span>Submit Salon Registration</span>
-                  <ArrowRight size={16} />
+                  {isLoading ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      <span>Registering Salon...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Submit Salon Registration</span>
+                      <ArrowRight size={16} />
+                    </>
+                  )}
                 </button>
               </div>
             </form>

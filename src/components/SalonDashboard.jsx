@@ -19,18 +19,19 @@ import {
   ServiceModal,
   RescheduleModal
 } from './salon/SalonModals';
+import { CheckCircle2, AlertCircle } from 'lucide-react';
 import { salonClient } from '../services/salonClient';
 import { authClient } from '../services/authClient';
 
 export default function SalonDashboard({ onNavigate }) {
+  // Toast Notification
+  const [toastMessage, setToastMessage] = useState(null);
+  const showToast = (message, type = 'success') => {
+    setToastMessage({ message, type });
+    setTimeout(() => setToastMessage(null), 3500);
+  };
   // Current user & authentication
-  const [currentUser, setCurrentUser] = useState(() => authClient.getStoredUser() || {
-    name: 'Rahul Sharma',
-    salonName: 'Apex Studio & Grooming',
-    phone: '+91 98765 01234',
-    roles: ['salon'],
-    activeRole: 'salon'
-  });
+  const [currentUser, setCurrentUser] = useState(() => authClient.getStoredUser() || null);
 
   // Salon & Subsystem Data State
   const [salon, setSalon] = useState(null);
@@ -158,12 +159,46 @@ export default function SalonDashboard({ onNavigate }) {
   };
 
   const handleUpdateAppointmentStatus = async (id, status, notes = '') => {
-    const res = await salonClient.updateAppointmentStatus(id, status, notes);
-    if (res?.appointment) {
-      setAppointments((prev) =>
-        prev.map((a) => (a.id === id ? res.appointment : a))
-      );
-      salonClient.fetchAnalytics('month').then((a) => a?.analytics && setAnalytics(a.analytics));
+    try {
+      const res = await salonClient.updateAppointmentStatus(id, status, notes);
+      if (res?.appointment) {
+        setAppointments((prev) =>
+          prev.map((a) => (a.id === id ? res.appointment : a))
+        );
+        salonClient.fetchAnalytics('month').then((a) => a?.analytics && setAnalytics(a.analytics));
+        
+        const labelMap = {
+          arrived: 'Client marked as Arrived',
+          in_service: 'Service started',
+          completed: 'Appointment marked Completed',
+          cancelled: 'Appointment cancelled',
+          confirmed: 'Appointment confirmed'
+        };
+        showToast(labelMap[status] || `Appointment updated to ${status}`, 'success');
+        return res.appointment;
+      }
+    } catch (err) {
+      console.error('[SalonDashboard] Error updating status:', err);
+      showToast(err.message || 'Failed to update appointment status.', 'error');
+      throw err;
+    }
+  };
+
+  const handleRecordPayment = async (id, paymentData) => {
+    try {
+      const res = await salonClient.recordAppointmentPayment(id, paymentData);
+      if (res?.appointment) {
+        setAppointments((prev) =>
+          prev.map((a) => (a.id === id ? res.appointment : a))
+        );
+        salonClient.fetchAnalytics('month').then((a) => a?.analytics && setAnalytics(a.analytics));
+        showToast(`Payment of ₹${paymentData.amount || res.appointment.totalAmount} recorded successfully!`, 'success');
+      }
+      return res;
+    } catch (err) {
+      console.error('[SalonDashboard] Error recording payment:', err);
+      showToast(err.message || 'Failed to record payment.', 'error');
+      throw err;
     }
   };
 
@@ -279,14 +314,35 @@ export default function SalonDashboard({ onNavigate }) {
   }
 
   // Compute live counts for sidebar badges
-  const todayStr = '2026-10-28';
+  const todayStr = (() => {
+    try {
+      return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+    } catch {
+      return new Date().toISOString().split('T')[0];
+    }
+  })();
   const todayAppointmentsCount = appointments.filter((a) => a.date === todayStr && a.status !== 'cancelled').length;
   const waitingQueueCount = queue.filter((q) => q.status === 'waiting').length;
   const activeStaffCount = staff.filter((s) => s.active).length;
 
   return (
-    <div className="min-h-screen bg-[#F7FBFF] text-[#111827] flex flex-col selection:bg-[#0EA5E9] selection:text-white">
-      
+    <div className="min-h-screen bg-[#F7FBFF] text-[#111827] flex flex-col selection:bg-[#0EA5E9] selection:text-white relative">
+      {/* Toast Notification Banner */}
+      {toastMessage && (
+        <div className={`fixed top-5 right-5 z-50 px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2.5 text-xs font-semibold animate-in fade-in slide-in-from-top-4 duration-200 ${
+          toastMessage.type === 'error'
+            ? 'bg-red-600 text-white'
+            : 'bg-[#111827] text-white'
+        }`}>
+          {toastMessage.type === 'error' ? (
+            <AlertCircle size={16} className="text-red-200" />
+          ) : (
+            <CheckCircle2 size={16} className="text-[#38BDF8]" />
+          )}
+          <span>{toastMessage.message}</span>
+        </div>
+      )}
+
       {/* Top Header */}
       <SalonHeader
         salon={salon}
@@ -346,6 +402,7 @@ export default function SalonDashboard({ onNavigate }) {
               onOpenNewAppointment={() => setIsNewAppointmentOpen(true)}
               onOpenReschedule={(apt) => setRescheduleAppointment(apt)}
               onUpdateStatus={handleUpdateAppointmentStatus}
+              onRecordPayment={handleRecordPayment}
               onRefresh={loadDashboardData}
             />
           )}
@@ -402,6 +459,9 @@ export default function SalonDashboard({ onNavigate }) {
           {activeTab === 'analytics' && (
             <SalonAnalyticsTab
               analytics={analytics}
+              onRefresh={(timeframe, options) =>
+                salonClient.fetchAnalytics(timeframe, options).then((a) => a?.analytics && setAnalytics(a.analytics))
+              }
             />
           )}
 

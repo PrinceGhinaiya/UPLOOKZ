@@ -86,10 +86,11 @@ export default function SalonHeader({
     else window.location.href = '/';
   };
 
-  const displaySalonName = salon?.name || currentUser?.salonName || 'Apex Studio & Grooming';
-  const displayOwnerName = currentUser?.name || 'Rahul Sharma';
-  const displayInitials = (displaySalonName || 'AS')
+  const displaySalonName = salon?.name || currentUser?.salonName || 'My Salon';
+  const displayOwnerName = currentUser?.name || 'Salon Partner';
+  const displayInitials = (displaySalonName || 'MS')
     .split(' ')
+    .filter(Boolean)
     .map((w) => w[0])
     .slice(0, 2)
     .join('')

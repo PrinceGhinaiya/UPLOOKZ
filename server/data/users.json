@@ -136,5 +136,57 @@
     "activeRole": "salon",
     "createdAt": "2026-10-27T14:09:13.642Z",
     "isVerified": true
+  },
+  "cust_1793286862476@test.uplookz.com": {
+    "id": "usr_1793286867549_0mds0",
+    "email": "cust_1793286862476@test.uplookz.com",
+    "name": "Priya Mehta",
+    "salonName": "",
+    "city": "Mumbai, Bandra",
+    "roles": [
+      "customer"
+    ],
+    "activeRole": "customer",
+    "createdAt": "2026-10-29T15:14:27.549Z",
+    "isVerified": true
+  },
+  "owner_1793286871212@test.uplookz.com": {
+    "id": "temp_1793286874303",
+    "email": "owner_1793286871212@test.uplookz.com",
+    "name": "Vikram Seth",
+    "roles": [
+      "salon"
+    ],
+    "activeRole": "salon",
+    "salonName": "Velvet Grooming Lounge",
+    "salonId": "salon_1793286874324_fa672b",
+    "createdAt": "2026-10-29T15:14:34.338Z",
+    "isVerified": true
+  },
+  "cust_1793286916221@test.uplookz.com": {
+    "id": "usr_1793286918945_smkp1",
+    "email": "cust_1793286916221@test.uplookz.com",
+    "name": "Priya Mehta",
+    "salonName": "",
+    "city": "Mumbai, Bandra",
+    "roles": [
+      "customer"
+    ],
+    "activeRole": "customer",
+    "createdAt": "2026-10-29T15:15:18.945Z",
+    "isVerified": true
+  },
+  "owner_1793286922563@test.uplookz.com": {
+    "id": "temp_1793286926222",
+    "email": "owner_1793286922563@test.uplookz.com",
+    "name": "Vikram Seth",
+    "roles": [
+      "salon"
+    ],
+    "activeRole": "salon",
+    "salonName": "Velvet Grooming Lounge",
+    "salonId": "salon_1793286926243_d43f0c",
+    "createdAt": "2026-10-29T15:15:26.256Z",
+    "isVerified": true
   }
 }

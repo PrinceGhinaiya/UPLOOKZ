@@ -64,5 +64,137 @@
     "status": "completed",
     "date": "2026-10-25",
     "timestamp": "2026-10-25T13:00:00.000Z"
+  },
+  {
+    "id": "txn_1793253396764_320433",
+    "salonId": "salon_apex_01",
+    "appointmentId": "apt_104",
+    "customerName": "Sneha Roy",
+    "amount": 650,
+    "paymentMethod": "UPI / GPay",
+    "status": "completed",
+    "date": "2026-10-28",
+    "timestamp": "2026-10-29T05:56:36.764Z"
+  },
+  {
+    "id": "txn_1793253401533_ff3a24",
+    "salonId": "salon_apex_01",
+    "appointmentId": "apt_105",
+    "customerName": "Arjun Nair",
+    "amount": 1800,
+    "paymentMethod": "Card",
+    "status": "completed",
+    "date": "2026-10-28",
+    "timestamp": "2026-10-29T05:56:41.533Z"
+  },
+  {
+    "id": "txn_1793253444304_2c6de9",
+    "salonId": "salon_apex_01",
+    "appointmentId": "apt_103",
+    "customerName": "Vikram Mehta",
+    "amount": 400,
+    "paymentMethod": "Cash",
+    "status": "completed",
+    "date": "2026-10-28",
+    "timestamp": "2026-10-29T05:57:24.304Z"
+  },
+  {
+    "id": "txn_1793253448894_d62f13",
+    "salonId": "salon_apex_01",
+    "appointmentId": "apt_106",
+    "customerName": "Rohan Joshi",
+    "amount": 2400,
+    "paymentMethod": "UPI / GPay",
+    "status": "completed",
+    "date": "2026-10-28",
+    "timestamp": "2026-10-29T05:57:28.895Z"
+  },
+  {
+    "id": "txn_1793253458762_b5b34b",
+    "salonId": "salon_apex_01",
+    "appointmentId": null,
+    "customerName": "Sameer Kapoor",
+    "amount": 500,
+    "paymentMethod": "Cash / UPI",
+    "status": "completed",
+    "date": "2026-10-29",
+    "timestamp": "2026-10-29T05:57:38.762Z"
+  },
+  {
+    "id": "txn_1793253474769_fc165e",
+    "salonId": "salon_apex_01",
+    "appointmentId": null,
+    "customerName": "Devendra Sharma",
+    "amount": 500,
+    "paymentMethod": "Cash / UPI",
+    "status": "completed",
+    "date": "2026-10-29",
+    "timestamp": "2026-10-29T05:57:54.769Z"
+  },
+  {
+    "id": "txn_1793273958158_391a1d",
+    "salonId": "salon_apex_01",
+    "appointmentId": null,
+    "customerName": "Kunal Shah",
+    "amount": 500,
+    "paymentMethod": "Cash / UPI",
+    "status": "completed",
+    "date": "2026-10-29",
+    "timestamp": "2026-10-29T11:39:18.158Z"
+  },
+  {
+    "id": "txn_1793273959345_d9d9ad",
+    "salonId": "salon_apex_01",
+    "appointmentId": null,
+    "customerName": "df",
+    "amount": 500,
+    "paymentMethod": "Cash / UPI",
+    "status": "completed",
+    "date": "2026-10-29",
+    "timestamp": "2026-10-29T11:39:19.345Z"
+  },
+  {
+    "id": "txn_1793274030996_859109",
+    "salonId": "salon_apex_01",
+    "appointmentId": "apt_1793273902281_18fff0",
+    "customerName": "nn",
+    "amount": 1200,
+    "paymentMethod": "UPI / Cash",
+    "status": "completed",
+    "date": "2026-10-31",
+    "timestamp": "2026-10-29T11:40:30.996Z"
+  },
+  {
+    "id": "txn_1793286922420_4b8ddc",
+    "salonId": "salon_apex_01",
+    "appointmentId": "apt_1793286922404_92d86a",
+    "customerName": "Priya Mehta",
+    "amount": 500,
+    "paymentMethod": "UPI / Cash",
+    "status": "completed",
+    "date": "2026-10-30",
+    "timestamp": "2026-10-29T15:15:22.420Z"
+  },
+  {
+    "id": "txn_1793287497958_ef2fe8",
+    "salonId": "salon_apex_01",
+    "appointmentId": null,
+    "customerName": "Priya Mehta",
+    "amount": 500,
+    "paymentMethod": "Cash / UPI",
+    "status": "completed",
+    "date": "2026-10-29",
+    "timestamp": "2026-10-29T15:24:57.958Z"
+  },
+  {
+    "id": "txn_1793287524590_6a4b84",
+    "salonId": "salon_apex_01",
+    "appointmentId": null,
+    "customerName": "zxcx",
+    "amount": 500,
+    "paymentMethod": "Cash / UPI",
+    "status": "completed",
+    "date": "2026-10-29",
+    "timestamp": "2026-10-29T15:25:24.591Z"
   }
 ]

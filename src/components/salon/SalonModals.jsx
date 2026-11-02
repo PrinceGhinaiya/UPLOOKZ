@@ -464,7 +464,13 @@ export function NewAppointmentModal({ isOpen, onClose, onSave, services = [], st
   const [customerEmail, setCustomerEmail] = useState('');
   const [selectedServiceId, setSelectedServiceId] = useState(services[0]?.id || '');
   const [selectedStaffId, setSelectedStaffId] = useState('');
-  const [date, setDate] = useState('2026-10-28');
+  const [date, setDate] = useState(() => {
+    try {
+      return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+    } catch {
+      return new Date().toISOString().split('T')[0];
+    }
+  });
   const [time, setTime] = useState('04:00 PM');
   const [notes, setNotes] = useState('');
   const [conflictWarning, setConflictWarning] = useState('');

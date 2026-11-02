@@ -1,108 +1,5 @@
 [
   {
-    "id": "stf_01",
-    "salonId": "salon_apex_01",
-    "name": "Karan Malhotra",
-    "role": "Senior Stylist & Barber",
-    "phone": "+91 98111 22334",
-    "email": "karan@apexstudio.com",
-    "avatar": "",
-    "assignedServiceIds": [
-      "srv_01",
-      "srv_02",
-      "srv_05"
-    ],
-    "workingHours": {
-      "start": "09:00",
-      "end": "18:00"
-    },
-    "weeklyOffDays": [
-      "Monday"
-    ],
-    "active": true,
-    "isManager": false,
-    "rating": 4.9,
-    "reviewsCount": 64
-  },
-  {
-    "id": "stf_02",
-    "salonId": "salon_apex_01",
-    "name": "Priya Deshmukh",
-    "role": "Master Colorist & Skin Specialist",
-    "phone": "+91 98222 33445",
-    "email": "priya@apexstudio.com",
-    "avatar": "",
-    "assignedServiceIds": [
-      "srv_01",
-      "srv_03",
-      "srv_04",
-      "srv_06",
-      "srv_07"
-    ],
-    "workingHours": {
-      "start": "10:00",
-      "end": "19:00"
-    },
-    "weeklyOffDays": [
-      "Tuesday"
-    ],
-    "active": true,
-    "isManager": false,
-    "rating": 4.95,
-    "reviewsCount": 78
-  },
-  {
-    "id": "stf_03",
-    "salonId": "salon_apex_01",
-    "name": "Amit Verma",
-    "role": "Lead Barber & Grooming Expert",
-    "phone": "+91 98333 44556",
-    "email": "amit@apexstudio.com",
-    "avatar": "",
-    "assignedServiceIds": [
-      "srv_01",
-      "srv_02",
-      "srv_05",
-      "srv_08"
-    ],
-    "workingHours": {
-      "start": "12:00",
-      "end": "21:00"
-    },
-    "weeklyOffDays": [
-      "Wednesday"
-    ],
-    "active": true,
-    "isManager": false,
-    "rating": 4.85,
-    "reviewsCount": 52
-  },
-  {
-    "id": "stf_04",
-    "salonId": "salon_apex_01",
-    "name": "Neha Kulkarni",
-    "role": "Spa & Wellness Therapist",
-    "phone": "+91 98444 55667",
-    "email": "neha@apexstudio.com",
-    "avatar": "",
-    "assignedServiceIds": [
-      "srv_03",
-      "srv_04",
-      "srv_08"
-    ],
-    "workingHours": {
-      "start": "11:00",
-      "end": "20:00"
-    },
-    "weeklyOffDays": [
-      "Thursday"
-    ],
-    "active": true,
-    "isManager": false,
-    "rating": 4.9,
-    "reviewsCount": 41
-  },
-  {
     "id": "stf_05",
     "salonId": "salon_apex_01",
     "name": "Rahul Sharma",
@@ -126,5 +23,65 @@
     "isManager": true,
     "rating": 5,
     "reviewsCount": 95
+  },
+  {
+    "id": "stf_1793277086834_d80a72",
+    "salonId": "salon_1793277086829_00ecb9",
+    "name": "Vikram Seth",
+    "role": "Owner & Creative Director",
+    "phone": "+91 91234 56789",
+    "email": "owner_1793277082308@test.uplookz.com",
+    "avatar": "",
+    "assignedServiceIds": [],
+    "workingHours": {
+      "start": "09:00 AM",
+      "end": "09:00 PM"
+    },
+    "weeklyOffDays": [],
+    "active": true,
+    "isManager": true,
+    "rating": 5,
+    "reviewsCount": 0,
+    "createdAt": "2026-10-29T12:31:26.834Z"
+  },
+  {
+    "id": "stf_1793286874330_a1ca51",
+    "salonId": "salon_1793286874324_fa672b",
+    "name": "Vikram Seth",
+    "role": "Owner & Creative Director",
+    "phone": "+91 91234 56789",
+    "email": "owner_1793286871212@test.uplookz.com",
+    "avatar": "",
+    "assignedServiceIds": [],
+    "workingHours": {
+      "start": "09:00 AM",
+      "end": "09:00 PM"
+    },
+    "weeklyOffDays": [],
+    "active": true,
+    "isManager": true,
+    "rating": 5,
+    "reviewsCount": 0,
+    "createdAt": "2026-10-29T15:14:34.330Z"
+  },
+  {
+    "id": "stf_1793286926248_ac33c4",
+    "salonId": "salon_1793286926243_d43f0c",
+    "name": "Vikram Seth",
+    "role": "Owner & Creative Director",
+    "phone": "+91 91234 56789",
+    "email": "owner_1793286922563@test.uplookz.com",
+    "avatar": "",
+    "assignedServiceIds": [],
+    "workingHours": {
+      "start": "09:00 AM",
+      "end": "09:00 PM"
+    },
+    "weeklyOffDays": [],
+    "active": true,
+    "isManager": true,
+    "rating": 5,
+    "reviewsCount": 0,
+    "createdAt": "2026-10-29T15:15:26.249Z"
   }
 ]

@@ -13,7 +13,7 @@ import {
   ArrowUpRight
 } from 'lucide-react';
 
-export default function SalonAnalyticsTab({ analytics = {} }) {
+export default function SalonAnalyticsTab({ analytics = {}, onRefresh }) {
   const [timeframe, setTimeframe] = useState('month'); // 'day' | 'week' | 'month'
 
   const {
@@ -23,6 +23,7 @@ export default function SalonAnalyticsTab({ analytics = {} }) {
     totalRevenue = 0,
     totalAppointments = 0,
     completedAppointments = 0,
+    completedPaidAppointments = 0,
     cancelledAppointments = 0,
     completionRate = 0,
     returnRate = 0,
@@ -31,6 +32,13 @@ export default function SalonAnalyticsTab({ analytics = {} }) {
     revenueTrends = [],
     transactions = []
   } = analytics;
+
+  const handleTimeframeChange = (tf) => {
+    setTimeframe(tf);
+    if (onRefresh) {
+      onRefresh(tf);
+    }
+  };
 
   // Selected revenue according to timeframe
   const displayRevenue =
@@ -49,14 +57,14 @@ export default function SalonAnalyticsTab({ analytics = {} }) {
             Revenue & Business Analytics
           </h2>
           <p className="text-xs sm:text-sm text-[#64748B]">
-            Calculated strictly from completed transactions and verified booking records.
+            Calculated strictly from completed paid transactions and verified booking records.
           </p>
         </div>
 
         {/* Timeframe selector */}
         <div className="inline-flex p-1 bg-white border border-[#E2E8F0] rounded-xl text-xs font-semibold text-[#64748B] shadow-sm">
           <button
-            onClick={() => setTimeframe('day')}
+            onClick={() => handleTimeframeChange('day')}
             className={`px-3 py-1.5 rounded-lg transition-all ${
               timeframe === 'day' ? 'bg-[#0EA5E9] text-white shadow-sm' : 'hover:text-[#111827]'
             }`}
@@ -64,7 +72,7 @@ export default function SalonAnalyticsTab({ analytics = {} }) {
             Today
           </button>
           <button
-            onClick={() => setTimeframe('week')}
+            onClick={() => handleTimeframeChange('week')}
             className={`px-3 py-1.5 rounded-lg transition-all ${
               timeframe === 'week' ? 'bg-[#0EA5E9] text-white shadow-sm' : 'hover:text-[#111827]'
             }`}
@@ -72,7 +80,7 @@ export default function SalonAnalyticsTab({ analytics = {} }) {
             Last 7 Days
           </button>
           <button
-            onClick={() => setTimeframe('month')}
+            onClick={() => handleTimeframeChange('month')}
             className={`px-3 py-1.5 rounded-lg transition-all ${
               timeframe === 'month' ? 'bg-[#0EA5E9] text-white shadow-sm' : 'hover:text-[#111827]'
             }`}
@@ -101,17 +109,17 @@ export default function SalonAnalyticsTab({ analytics = {} }) {
           </p>
         </div>
 
-        {/* Card 2: Completed Bookings */}
+        {/* Card 2: Completed Paid Bookings */}
         <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-clean space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-[#64748B]">Completed Bookings</span>
+            <span className="text-xs font-medium text-[#64748B]">Paid Completed Bookings</span>
             <div className="w-8 h-8 rounded-lg bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center">
               <CheckCircle2 size={16} />
             </div>
           </div>
-          <p className="text-2xl font-bold text-[#111827]">{completedAppointments}</p>
+          <p className="text-2xl font-bold text-[#111827]">{completedPaidAppointments || completedAppointments}</p>
           <p className="text-[11px] text-[#64748B]">
-            {completionRate}% completion rate ({cancelledAppointments} cancelled)
+            {completedPaidAppointments || completedAppointments} paid • {cancelledAppointments} cancelled ({completionRate}% rate)
           </p>
         </div>
 

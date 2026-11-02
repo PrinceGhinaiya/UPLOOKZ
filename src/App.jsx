@@ -11,10 +11,13 @@ import LoginModal from './components/LoginModal';
 import CustomerHome from './components/CustomerHome';
 import SalonDashboard from './components/SalonDashboard';
 import SalonRegister from './components/SalonRegister';
+import ErrorBoundary from './components/ErrorBoundary';
+import { authClient } from './services/authClient';
 import { CheckCircle2, X } from 'lucide-react';
 
 export default function App() {
   const [toast, setToast] = useState(null);
+  const [currentUser, setCurrentUser] = useState(() => authClient.getStoredUser());
   const [currentPath, setCurrentPath] = useState(
     typeof window !== 'undefined' ? window.location.pathname : '/'
   );
@@ -24,6 +27,13 @@ export default function App() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(
     typeof window !== 'undefined' && (window.location.pathname === '/login' || window.location.pathname === '/signup')
   );
+
+  useEffect(() => {
+    const unsub = authClient.subscribe((u) => {
+      setCurrentUser(u);
+    });
+    return () => unsub();
+  }, []);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -107,7 +117,7 @@ export default function App() {
       return;
     }
 
-    const knownRoutes = ['/', '/salon/register', '/customer/home', '/customer/dashboard', '/salon/dashboard'];
+    const knownRoutes = ['/', '/salons', '/salon/register', '/customer/home', '/customer/dashboard', '/salon/dashboard'];
 
     if (knownRoutes.includes(normalized)) {
       navigate(path);
@@ -120,19 +130,48 @@ export default function App() {
     }
   };
 
-  // Route: Customer Home / Dashboard
-  if (currentPath === '/customer/home' || currentPath === '/customer/dashboard') {
-    return <CustomerHome onNavigate={navigate} />;
+  // Route: Customer Home / Discovery / Dashboard / Salons, or returning from payment callback
+  const hasPaymentCallback = typeof window !== 'undefined' && (
+    new URLSearchParams(window.location.search).has('payment') ||
+    new URLSearchParams(window.location.search).has('tab') ||
+    new URLSearchParams(window.location.search).has('salonId')
+  );
+
+  const isCustomerLoggedIn = currentUser && (
+    currentUser.activeRole === 'customer' ||
+    (Array.isArray(currentUser.roles) && currentUser.roles.includes('customer'))
+  );
+
+  if (
+    currentPath === '/customer/home' ||
+    currentPath === '/customer/dashboard' ||
+    currentPath === '/salons' ||
+    hasPaymentCallback ||
+    (currentPath === '/' && isCustomerLoggedIn)
+  ) {
+    return (
+      <ErrorBoundary>
+        <CustomerHome onNavigate={navigate} />
+      </ErrorBoundary>
+    );
   }
 
   // Route: Salon Owner Dashboard
   if (currentPath === '/salon/dashboard') {
-    return <SalonDashboard onNavigate={navigate} />;
+    return (
+      <ErrorBoundary>
+        <SalonDashboard onNavigate={navigate} />
+      </ErrorBoundary>
+    );
   }
 
   // Route: Salon Registration
   if (currentPath === '/salon/register') {
-    return <SalonRegister onNavigate={navigate} />;
+    return (
+      <ErrorBoundary>
+        <SalonRegister onNavigate={navigate} />
+      </ErrorBoundary>
+    );
   }
 
   // Default Route: Existing Landing Page with Login/Signup Modal on top

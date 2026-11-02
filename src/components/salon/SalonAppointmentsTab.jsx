@@ -17,7 +17,14 @@ import {
   ChevronLeft,
   ChevronRight,
   UserCheck,
-  AlertCircle
+  AlertCircle,
+  CreditCard,
+  DollarSign,
+  QrCode,
+  Wallet,
+  X,
+  ShieldCheck,
+  Lock
 } from 'lucide-react';
 
 export default function SalonAppointmentsTab({
@@ -27,14 +34,30 @@ export default function SalonAppointmentsTab({
   onOpenNewAppointment,
   onOpenReschedule,
   onUpdateStatus,
+  onRecordPayment,
   onRefresh
 }) {
+  const getTodayStr = () => {
+    try {
+      return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+    } catch {
+      return new Date().toISOString().split('T')[0];
+    }
+  };
   const [viewMode, setViewMode] = useState('day'); // 'day' | 'week' | 'month'
-  const [selectedDate, setSelectedDate] = useState('2026-10-28');
+  const [selectedDate, setSelectedDate] = useState(getTodayStr());
   const [statusFilter, setStatusFilter] = useState('all');
   const [staffFilter, setStaffFilter] = useState('all');
+  const [paymentFilter, setPaymentFilter] = useState('all'); // 'all' | 'paid' | 'unpaid'
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedAppointment, setSelectedAppointment] = useState(null);
+
+  // Payment Recording Modal State
+  const [paymentModalApt, setPaymentModalApt] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState('Cash');
+  const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [paymentSuccessMsg, setPaymentSuccessMsg] = useState('');
 
   // Filter appointments
   const filteredAppointments = appointments.filter((apt) => {
@@ -54,6 +77,8 @@ export default function SalonAppointmentsTab({
 
     if (statusFilter !== 'all' && apt.status !== statusFilter) return false;
     if (staffFilter !== 'all' && apt.staffId !== staffFilter) return false;
+    if (paymentFilter === 'paid' && apt.paymentStatus !== 'paid') return false;
+    if (paymentFilter === 'unpaid' && apt.paymentStatus === 'paid') return false;
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -65,6 +90,39 @@ export default function SalonAppointmentsTab({
 
     return true;
   });
+
+  const handleOpenPaymentModal = (apt) => {
+    setPaymentModalApt(apt);
+    setPaymentMethod(apt.paymentMethod === 'Card' ? 'Card' : apt.paymentMethod === 'UPI' ? 'UPI' : 'Cash');
+    setPaymentAmount(apt.totalAmount?.toString() || '0');
+    setPaymentSuccessMsg('');
+  };
+
+  const handleConfirmPayment = async () => {
+    if (!paymentModalApt || !onRecordPayment) return;
+    const numAmount = parseFloat(paymentAmount);
+    if (isNaN(numAmount) || numAmount < 0) {
+      alert('Please enter a valid payment amount.');
+      return;
+    }
+    setPaymentLoading(true);
+    try {
+      await onRecordPayment(paymentModalApt.id, {
+        paymentStatus: 'paid',
+        paymentMethod,
+        amount: numAmount
+      });
+      setPaymentSuccessMsg(`✓ Payment of ₹${numAmount} successfully recorded via ${paymentMethod}!`);
+      setTimeout(() => {
+        setPaymentModalApt(null);
+        setPaymentLoading(false);
+        setPaymentSuccessMsg('');
+      }, 1000);
+    } catch (err) {
+      alert(err.message || 'Failed to record payment');
+      setPaymentLoading(false);
+    }
+  };
 
   const handlePrevDate = () => {
     const d = new Date(selectedDate);
@@ -83,7 +141,7 @@ export default function SalonAppointmentsTab({
   };
 
   const handleSetToday = () => {
-    setSelectedDate('2026-10-28');
+    setSelectedDate(getTodayStr());
   };
 
   return (
@@ -177,8 +235,8 @@ export default function SalonAppointmentsTab({
 
         </div>
 
-        {/* Filters Row: Search + Status + Staff */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-[#F1F5F9]">
+        {/* Filters Row: Search + Status + Staff + Payment */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2 border-t border-[#F1F5F9]">
           
           <div className="relative">
             <Search size={14} className="absolute left-3 top-2.5 text-[#94A3B8]" />
@@ -197,7 +255,7 @@ export default function SalonAppointmentsTab({
               onChange={(e) => setStatusFilter(e.target.value)}
               className="w-full px-3 py-1.5 text-xs border border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#0EA5E9] text-[#334155]"
             >
-              <option value="all">All Statuses</option>
+              <option value="all">All Appointment Statuses</option>
               <option value="pending">Pending Approval</option>
               <option value="confirmed">Confirmed</option>
               <option value="arrived">Client Arrived</option>
@@ -217,6 +275,18 @@ export default function SalonAppointmentsTab({
               {staff.map((st) => (
                 <option key={st.id} value={st.id}>{st.name}</option>
               ))}
+            </select>
+          </div>
+
+          <div>
+            <select
+              value={paymentFilter}
+              onChange={(e) => setPaymentFilter(e.target.value)}
+              className="w-full px-3 py-1.5 text-xs border border-[#CBD5E1] rounded-lg focus:outline-none focus:border-[#0EA5E9] text-[#334155] font-medium"
+            >
+              <option value="all">All Payments</option>
+              <option value="paid">Paid Transactions Only</option>
+              <option value="unpaid">Unpaid / Payment Pending</option>
             </select>
           </div>
 
@@ -273,9 +343,25 @@ export default function SalonAppointmentsTab({
                     }`}>
                       {apt.status}
                     </span>
-                    {apt.paymentStatus === 'paid' && (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#ECFDF5] text-[#059669]">
-                        Paid
+                    {apt.paymentStatus === 'paid' ? (
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0]">
+                          {(apt.paymentMethod === 'PayU' || apt.paymentMethod === 'Razorpay') ? (
+                            <ShieldCheck size={11} className="text-[#059669]" />
+                          ) : (
+                            <Check size={11} />
+                          )}
+                          Paid ({apt.paymentMethod || 'Cash'})
+                        </span>
+                        {(apt.payuPaymentId || apt.payuTxnId || apt.razorpayPaymentId) && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-mono text-[#0284C7] bg-[#F0F9FF] border border-[#BAE6FD]">
+                            Ref: #{(apt.payuPaymentId || apt.payuTxnId || apt.razorpayPaymentId).slice(-8)}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                        Payment Pending
                       </span>
                     )}
                   </div>
@@ -301,6 +387,12 @@ export default function SalonAppointmentsTab({
                       <span className="flex items-center gap-1">
                         <Phone size={13} className="text-[#0EA5E9]" />
                         {apt.customerPhone}
+                      </span>
+                    )}
+                    {apt.arrivedAt && (
+                      <span className="flex items-center gap-1 font-semibold text-[#C026D3] bg-[#FDF4FF] px-2 py-0.5 rounded-full border border-[#F5D0FE] text-[11px]">
+                        <UserCheck size={11} />
+                        Arrived: {apt.arrivedAt.split(' ')[1] || apt.arrivedAt}
                       </span>
                     )}
                   </div>
@@ -346,15 +438,15 @@ export default function SalonAppointmentsTab({
                     <>
                       <button
                         onClick={() => onUpdateStatus(apt.id, 'arrived')}
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#FDF4FF] text-[#C026D3] hover:bg-[#F5D0FE] text-xs font-semibold border border-[#F5D0FE]"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#FDF4FF] to-[#FAE8FF] text-[#C026D3] hover:from-[#FAE8FF] hover:to-[#F5D0FE] text-xs font-bold border border-[#F5D0FE] shadow-sm transition-all active:scale-95"
                         title="Client reached salon"
                       >
-                        <UserCheck size={13} />
-                        <span>Arrived</span>
+                        <UserCheck size={13} className="text-[#C026D3]" />
+                        <span>Client Arrived</span>
                       </button>
                       <button
                         onClick={() => onUpdateStatus(apt.id, 'in_service')}
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#F0F9FF] text-[#0284C7] hover:bg-[#E0F2FE] text-xs font-semibold border border-[#BAE6FD]"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F0F9FF] text-[#0284C7] hover:bg-[#E0F2FE] text-xs font-bold border border-[#BAE6FD] transition-all active:scale-95"
                         title="Seat client and start"
                       >
                         <Play size={13} />
@@ -362,7 +454,7 @@ export default function SalonAppointmentsTab({
                       </button>
                       <button
                         onClick={() => onOpenReschedule(apt)}
-                        className="p-1.5 rounded-lg text-[#64748B] hover:text-[#111827] hover:bg-[#F1F5F9] border border-[#CBD5E1]"
+                        className="p-1.5 rounded-xl text-[#64748B] hover:text-[#111827] hover:bg-[#F1F5F9] border border-[#CBD5E1] transition-all"
                         title="Reschedule appointment"
                       >
                         <RotateCcw size={13} />
@@ -371,13 +463,23 @@ export default function SalonAppointmentsTab({
                   )}
 
                   {apt.status === 'arrived' && (
-                    <button
-                      onClick={() => onUpdateStatus(apt.id, 'in_service')}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#0EA5E9] text-white hover:bg-[#0284C7] text-xs font-semibold shadow-sm"
-                    >
-                      <Play size={13} />
-                      <span>Start Service</span>
-                    </button>
+                    <>
+                      <button
+                        onClick={() => onUpdateStatus(apt.id, 'in_service')}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#0EA5E9] text-white hover:bg-[#0284C7] text-xs font-bold shadow-sm transition-all active:scale-95"
+                        title="Seat client and start service"
+                      >
+                        <Play size={13} />
+                        <span>Start Service</span>
+                      </button>
+                      <button
+                        onClick={() => onOpenReschedule(apt)}
+                        className="p-1.5 rounded-xl text-[#64748B] hover:text-[#111827] hover:bg-[#F1F5F9] border border-[#CBD5E1] transition-all"
+                        title="Reschedule appointment"
+                      >
+                        <RotateCcw size={13} />
+                      </button>
+                    </>
                   )}
 
                   {apt.status === 'in_service' && (
@@ -386,9 +488,29 @@ export default function SalonAppointmentsTab({
                       className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#16A34A] text-white hover:bg-[#15803D] text-xs font-semibold shadow-sm"
                     >
                       <CheckCircle2 size={13} />
-                      <span>Mark Complete & Pay</span>
+                      <span>Complete Service</span>
                     </button>
                   )}
+
+                  {/* Payment recording button or locked status for online Razorpay payments */}
+                  {apt.paymentStatus === 'paid' && (apt.paymentMethod === 'PayU' || apt.paymentMethod === 'Razorpay') ? (
+                    <span
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#F8FAFC] text-[#64748B] border border-[#E2E8F0] text-xs font-medium cursor-not-allowed select-none"
+                      title="Paid online via PayU. Manual payment modification is locked to prevent tampering."
+                    >
+                      <Lock size={12} className="text-[#94A3B8]" />
+                      <span>Paid Online (Locked)</span>
+                    </span>
+                  ) : apt.paymentStatus !== 'paid' && apt.status !== 'cancelled' ? (
+                    <button
+                      onClick={() => handleOpenPaymentModal(apt)}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#ECFDF5] hover:bg-[#D1FAE5] text-[#059669] border border-[#A7F3D0] text-xs font-semibold shadow-sm transition-all"
+                      title="Collect cash or online payment"
+                    >
+                      <DollarSign size={13} />
+                      <span>Record Payment</span>
+                    </button>
+                  ) : null}
 
                   {apt.status !== 'completed' && apt.status !== 'cancelled' && (
                     <button
@@ -406,6 +528,158 @@ export default function SalonAppointmentsTab({
           ))
         )}
       </div>
+
+      {/* Record Payment Modal */}
+      {paymentModalApt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-[#E2E8F0] space-y-5">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-[#F1F5F9]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-[#ECFDF5] text-[#059669] flex items-center justify-center border border-[#A7F3D0]">
+                  <DollarSign size={18} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-[#111827]">Record Payment</h3>
+                  <p className="text-xs text-[#64748B]">Verify payment & update revenue</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setPaymentModalApt(null)}
+                className="p-1.5 rounded-lg text-[#94A3B8] hover:text-[#111827] hover:bg-[#F1F5F9]"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Client & Service Info */}
+            <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-3.5 space-y-1.5 text-xs">
+              <div className="flex justify-between">
+                <span className="text-[#64748B]">Client:</span>
+                <span className="font-bold text-[#111827]">{paymentModalApt.customerName}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[#64748B]">Service:</span>
+                <span className="font-semibold text-[#334155]">{paymentModalApt.serviceNames?.join(', ')}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[#64748B]">Schedule:</span>
+                <span className="text-[#64748B]">{paymentModalApt.date} at {paymentModalApt.time}</span>
+              </div>
+              <div className="flex justify-between pt-1 border-t border-[#E2E8F0]">
+                <span className="font-semibold text-[#111827]">Total Amount:</span>
+                <span className="font-bold text-[#0EA5E9]">₹{paymentModalApt.totalAmount}</span>
+              </div>
+            </div>
+
+            {/* Success message or Form */}
+            {paymentSuccessMsg ? (
+              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-center text-xs font-bold text-emerald-800 animate-fadeIn">
+                {paymentSuccessMsg}
+              </div>
+            ) : (
+              <>
+                {/* Payment Method Selector */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-[#111827] block">
+                    Payment Method
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('Cash')}
+                      className={`flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl border text-xs font-semibold transition-all ${
+                        paymentMethod === 'Cash'
+                          ? 'bg-[#F0FDF4] border-[#16A34A] text-[#16A34A] ring-1 ring-[#16A34A]'
+                          : 'bg-white border-[#E2E8F0] text-[#64748B] hover:border-[#CBD5E1]'
+                      }`}
+                    >
+                      <Wallet size={18} />
+                      <span>Cash</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('UPI')}
+                      className={`flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl border text-xs font-semibold transition-all ${
+                        paymentMethod === 'UPI'
+                          ? 'bg-[#F0F9FF] border-[#0EA5E9] text-[#0EA5E9] ring-1 ring-[#0EA5E9]'
+                          : 'bg-white border-[#E2E8F0] text-[#64748B] hover:border-[#CBD5E1]'
+                      }`}
+                    >
+                      <QrCode size={18} />
+                      <span>UPI / QR</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('Card')}
+                      className={`flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl border text-xs font-semibold transition-all ${
+                        paymentMethod === 'Card'
+                          ? 'bg-[#FAF5FF] border-[#9333EA] text-[#9333EA] ring-1 ring-[#9333EA]'
+                          : 'bg-white border-[#E2E8F0] text-[#64748B] hover:border-[#CBD5E1]'
+                      }`}
+                    >
+                      <CreditCard size={18} />
+                      <span>Card / POS</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Amount Paid Input */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-[#111827] block">
+                    Received Amount (₹)
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-2.5 text-sm font-bold text-[#64748B]">₹</span>
+                    <input
+                      type="number"
+                      value={paymentAmount}
+                      onChange={(e) => setPaymentAmount(e.target.value)}
+                      min="0"
+                      step="1"
+                      className="w-full pl-8 pr-3 py-2 text-sm font-bold text-[#111827] border border-[#CBD5E1] rounded-xl focus:outline-none focus:border-[#0EA5E9]"
+                    />
+                  </div>
+                  <p className="text-[11px] text-[#94A3B8]">
+                    Verify the received amount before recording to the ledger.
+                  </p>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentModalApt(null)}
+                    disabled={paymentLoading}
+                    className="flex-1 py-2.5 rounded-xl border border-[#CBD5E1] text-xs font-semibold text-[#64748B] hover:bg-[#F8FAFC]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmPayment}
+                    disabled={paymentLoading}
+                    className="flex-1 py-2.5 rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-1.5"
+                  >
+                    {paymentLoading ? (
+                      <span>Recording...</span>
+                    ) : (
+                      <>
+                        <Check size={14} />
+                        <span>Confirm & Collect</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
+
+          </div>
+        </div>
+      )}
 
     </div>
   );

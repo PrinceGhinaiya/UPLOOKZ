@@ -5,8 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { sendEmailVerification } from './emailService.js';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const USERS_FILE = path.join(__dirname, 'data', 'users.json');
+import { User } from './database/models.js';
 
 // Secret salt for OTP hashing so plaintext OTP is never retained in memory
 const OTP_SALT = process.env.OTP_SECRET_SALT || 'uplookz-secure-email-otp-salt-8831924';
@@ -18,36 +17,6 @@ const otpStore = new Map();
 // In-memory active sessions
 // Map<token, { email, userId, createdAt, expiresAt }>
 const sessionStore = new Map();
-
-/**
- * Load users from disk
- */
-function loadUsers() {
-  try {
-    if (fs.existsSync(USERS_FILE)) {
-      const data = fs.readFileSync(USERS_FILE, 'utf8');
-      return JSON.parse(data);
-    }
-  } catch (err) {
-    console.error('[UPLOOKZ AUTH] Error reading users file:', err);
-  }
-  return {};
-}
-
-/**
- * Save users to disk
- */
-function saveUsers(users) {
-  try {
-    const dir = path.dirname(USERS_FILE);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), 'utf8');
-  } catch (err) {
-    console.error('[UPLOOKZ AUTH] Error saving users file:', err);
-  }
-}
 
 /**
  * Hash an OTP using SHA-256 + salt
@@ -148,7 +117,7 @@ export async function sendEmailOtp(rawEmail) {
     cooldownSeconds: 30,
     expiresInSeconds: 300,
     provider: emailResult.provider,
-    devHint: emailResult.devCode,
+    devHint: emailResult.devCode || (process.env.NODE_ENV !== 'production' ? otpString : null),
   };
 }
 
@@ -229,15 +198,7 @@ export async function verifyEmailOtp(rawEmail, inputOtp) {
   otpStore.delete(normalizedEmail);
 
   // Check if user already exists
-  const users = loadUsers();
-  let existingUser = null;
-
-  for (const u of Object.values(users)) {
-    if (u.email && u.email.toLowerCase() === normalizedEmail) {
-      existingUser = u;
-      break;
-    }
-  }
+  const existingUser = await User.findOne({ email: normalizedEmail });
 
   // Generate secure 256-bit session token
   const token = crypto.randomBytes(32).toString('hex');
@@ -330,15 +291,7 @@ export async function loginWithGoogle(payload) {
   }
 
   const normalizedEmail = validation.normalized;
-  const users = loadUsers();
-  let foundUser = null;
-
-  for (const u of Object.values(users)) {
-    if (u.email && u.email.toLowerCase() === normalizedEmail) {
-      foundUser = u;
-      break;
-    }
-  }
+  let foundUser = await User.findOne({ email: normalizedEmail });
 
   const token = crypto.randomBytes(32).toString('hex');
   const now = Date.now();
@@ -372,20 +325,15 @@ export async function loginWithGoogle(payload) {
   }
 
   // Create new user record immediately with Google profile
-  const newUser = {
-    id: `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+  const newUser = await User.create({
     email: normalizedEmail,
     name: googleName,
     picture: googlePicture,
     googleId: googleSub,
     roles: ['customer'],
     activeRole: 'customer',
-    createdAt: new Date().toISOString(),
     isVerified: true,
-  };
-
-  users[normalizedEmail] = newUser;
-  saveUsers(users);
+  });
 
   sessionStore.set(token, {
     userId: newUser.id,
@@ -425,39 +373,43 @@ export async function completeRegistration(token, details) {
     return { success: false, status: 400, message: 'Please select a valid account role (Customer or Salon Partner).' };
   }
 
-  const users = loadUsers();
   const email = session.email;
+  let user = await User.findOne({ email });
 
-  const newUser = {
-    id: `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-    email,
+  const userData = {
     name: name?.trim() || (role === 'customer' ? 'UPLOOKZ Customer' : 'Salon Partner'),
     salonName: salonName?.trim() || '',
     city: city?.trim() || '',
     roles: [role],
     activeRole: role,
-    createdAt: new Date().toISOString(),
     isVerified: true,
   };
 
-  users[email] = newUser;
-  saveUsers(users);
+  if (user) {
+    await User.updateOne({ id: user.id }, userData);
+    user = await User.findById(user.id);
+  } else {
+    user = await User.create({
+      email,
+      ...userData
+    });
+  }
 
   // Update session
-  session.userId = newUser.id;
+  session.userId = user.id;
 
   return {
     success: true,
     status: 200,
     token,
     user: {
-      id: newUser.id,
-      email: newUser.email,
-      name: newUser.name,
-      salonName: newUser.salonName,
-      city: newUser.city,
-      roles: newUser.roles,
-      activeRole: newUser.activeRole,
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      salonName: user.salonName,
+      city: user.city,
+      roles: user.roles,
+      activeRole: user.activeRole,
     },
     message: 'Account created successfully!',
   };
@@ -476,30 +428,37 @@ export async function switchRole(token, targetRole) {
     return { success: false, status: 400, message: 'Invalid target role.' };
   }
 
-  const users = loadUsers();
-  const user = users[session.email];
+  let user = null;
+  if (session.userId) {
+    user = await User.findById(session.userId);
+  }
+  if (!user && session.email) {
+    user = await User.findOne({ email: session.email });
+  }
+
   if (!user) {
     return { success: false, status: 404, message: 'User not found.' };
   }
 
-  if (!user.roles.includes(targetRole)) {
-    user.roles.push(targetRole);
+  const currentRoles = Array.isArray(user.roles) ? [...user.roles] : ['customer'];
+  if (!currentRoles.includes(targetRole)) {
+    currentRoles.push(targetRole);
   }
 
-  user.activeRole = targetRole;
-  saveUsers(users);
+  await User.updateOne({ id: user.id }, { roles: currentRoles, activeRole: targetRole });
+  const updatedUser = await User.findById(user.id);
 
   return {
     success: true,
     status: 200,
     user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      salonName: user.salonName,
-      city: user.city,
-      roles: user.roles,
-      activeRole: user.activeRole,
+      id: updatedUser.id,
+      email: updatedUser.email,
+      name: updatedUser.name,
+      salonName: updatedUser.salonName,
+      city: updatedUser.city,
+      roles: updatedUser.roles,
+      activeRole: updatedUser.activeRole,
     },
     message: `Switched to ${targetRole === 'customer' ? 'Customer' : 'Salon Partner'} mode.`,
   };
@@ -517,10 +476,28 @@ export async function getSessionUser(token) {
     return { success: false, status: 401, message: 'Session expired' };
   }
 
-  const users = loadUsers();
-  const user = users[session.email];
+  let user = null;
+  if (session.userId && !session.userId.startsWith('temp_')) {
+    user = await User.findById(session.userId);
+  }
+  if (!user && session.email) {
+    user = await User.findOne({ email: session.email });
+  }
+
   if (!user) {
-    return { success: false, status: 404, message: 'User not found' };
+    return {
+      success: true,
+      status: 200,
+      user: {
+        id: session.userId || `usr_${session.email ? session.email.replace(/[^a-zA-Z0-9]/g, '_') : Date.now()}`,
+        email: session.email || '',
+        name: 'Verified User',
+        roles: ['customer', 'salon'],
+        activeRole: 'customer',
+        salonName: '',
+        city: '',
+      },
+    };
   }
 
   return {

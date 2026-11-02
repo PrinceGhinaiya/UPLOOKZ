@@ -70,12 +70,12 @@
     "time": "02:00 PM",
     "durationMinutes": 30,
     "totalAmount": 400,
-    "status": "in_service",
-    "paymentStatus": "pending",
+    "status": "completed",
+    "paymentStatus": "paid",
     "paymentMethod": "Cash",
     "notes": "Sharpen cheeklines",
     "createdAt": "2026-10-28T07:30:00.000Z",
-    "updatedAt": "2026-10-28T14:00:00.000Z"
+    "updatedAt": "2026-10-29T05:57:24.301Z"
   },
   {
     "id": "apt_104",
@@ -96,12 +96,12 @@
     "time": "03:15 PM",
     "durationMinutes": 45,
     "totalAmount": 650,
-    "status": "confirmed",
-    "paymentStatus": "pending",
+    "status": "completed",
+    "paymentStatus": "paid",
     "paymentMethod": "UPI / GPay",
     "notes": "Layered trim",
     "createdAt": "2026-10-28T09:00:00.000Z",
-    "updatedAt": "2026-10-28T09:00:00.000Z"
+    "updatedAt": "2026-10-29T05:56:36.761Z"
   },
   {
     "id": "apt_105",
@@ -122,12 +122,12 @@
     "time": "05:00 PM",
     "durationMinutes": 60,
     "totalAmount": 1800,
-    "status": "confirmed",
-    "paymentStatus": "pending",
+    "status": "completed",
+    "paymentStatus": "paid",
     "paymentMethod": "Card",
     "notes": "Sensitive skin prep",
     "createdAt": "2026-10-28T10:45:00.000Z",
-    "updatedAt": "2026-10-28T10:45:00.000Z"
+    "updatedAt": "2026-10-29T05:56:41.531Z"
   },
   {
     "id": "apt_106",
@@ -148,12 +148,12 @@
     "time": "06:30 PM",
     "durationMinutes": 105,
     "totalAmount": 2400,
-    "status": "pending",
-    "paymentStatus": "pending",
+    "status": "completed",
+    "paymentStatus": "paid",
     "paymentMethod": "UPI / GPay",
     "notes": "Wedding attending tomorrow",
     "createdAt": "2026-10-28T12:00:00.000Z",
-    "updatedAt": "2026-10-28T12:00:00.000Z"
+    "updatedAt": "2026-10-29T05:57:28.892Z"
   },
   {
     "id": "apt_090",
@@ -257,5 +257,321 @@
     "notes": "Client cancelled due to emergency",
     "createdAt": "2026-10-23T16:00:00.000Z",
     "updatedAt": "2026-10-24T12:00:00.000Z"
+  },
+  {
+    "id": "apt_1793258151982_9204fc",
+    "salonId": "salon_apex_01",
+    "customerId": "usr_customer_01",
+    "customerName": "Prince Ghinaiya",
+    "customerPhone": "+91 98765 01234",
+    "customerEmail": "ghinaiyaprince12@gmail.com",
+    "serviceIds": [
+      "srv_01"
+    ],
+    "serviceNames": [
+      "Executive Haircut & Styling"
+    ],
+    "staffId": null,
+    "staffName": "Any Available Stylist",
+    "date": "2026-10-31",
+    "time": "04:30 PM",
+    "durationMinutes": 45,
+    "totalAmount": 500,
+    "status": "confirmed",
+    "paymentStatus": "pending",
+    "paymentMethod": "UPI / Cash",
+    "notes": "",
+    "createdAt": "2026-10-29T07:15:51.982Z",
+    "updatedAt": "2026-10-29T07:15:51.982Z"
+  },
+  {
+    "id": "apt_1793273902281_18fff0",
+    "salonId": "salon_apex_01",
+    "customerId": "cust_1793273902282_df8b9f",
+    "customerName": "nn",
+    "customerPhone": "79",
+    "customerEmail": "",
+    "serviceIds": [
+      "srv_03"
+    ],
+    "serviceNames": [
+      "Hair Spa & Scalp Detox"
+    ],
+    "staffId": null,
+    "staffName": "Any Available Stylist",
+    "date": "2026-10-31",
+    "time": "04:00 PM",
+    "durationMinutes": 60,
+    "totalAmount": 1200,
+    "status": "completed",
+    "paymentStatus": "paid",
+    "paymentMethod": "UPI / Cash",
+    "notes": "",
+    "createdAt": "2026-10-29T11:38:22.282Z",
+    "updatedAt": "2026-10-29T11:40:30.993Z"
+  },
+  {
+    "id": "apt_1793273930066_91cc9c",
+    "salonId": "salon_apex_01",
+    "customerId": "cust_1793273930066_c0aac1",
+    "customerName": "nn",
+    "customerPhone": "79",
+    "customerEmail": "",
+    "serviceIds": [
+      "srv_03"
+    ],
+    "serviceNames": [
+      "Hair Spa & Scalp Detox"
+    ],
+    "staffId": null,
+    "staffName": "Any Available Stylist",
+    "date": "2026-10-31",
+    "time": "04:00 PM",
+    "durationMinutes": 60,
+    "totalAmount": 1200,
+    "status": "confirmed",
+    "paymentStatus": "pending",
+    "paymentMethod": "UPI / Cash",
+    "notes": "",
+    "createdAt": "2026-10-29T11:38:50.067Z",
+    "updatedAt": "2026-10-29T11:38:50.067Z"
+  },
+  {
+    "id": "apt_1793273946742_6319fa",
+    "salonId": "salon_apex_01",
+    "customerId": "cust_1793273946742_d4860d",
+    "customerName": "nn",
+    "customerPhone": "79",
+    "customerEmail": "",
+    "serviceIds": [
+      "srv_03"
+    ],
+    "serviceNames": [
+      "Hair Spa & Scalp Detox"
+    ],
+    "staffId": null,
+    "staffName": "Any Available Stylist",
+    "date": "2026-10-31",
+    "time": "04:00 PM",
+    "durationMinutes": 60,
+    "totalAmount": 1200,
+    "status": "confirmed",
+    "paymentStatus": "pending",
+    "paymentMethod": "UPI / Cash",
+    "notes": "",
+    "createdAt": "2026-10-29T11:39:06.742Z",
+    "updatedAt": "2026-10-29T11:39:06.742Z"
+  },
+  {
+    "id": "apt_1793273987836_def75b",
+    "salonId": "salon_apex_01",
+    "customerId": "cust_1793273987836_e11ac6",
+    "customerName": ",,",
+    "customerPhone": "33",
+    "customerEmail": "",
+    "serviceIds": [
+      "srv_01"
+    ],
+    "serviceNames": [
+      "Executive Haircut & Styling"
+    ],
+    "staffId": null,
+    "staffName": "Any Available Stylist",
+    "date": "2026-11-06",
+    "time": "04:00 PM",
+    "durationMinutes": 45,
+    "totalAmount": 500,
+    "status": "confirmed",
+    "paymentStatus": "pending",
+    "paymentMethod": "UPI / Cash",
+    "notes": "",
+    "createdAt": "2026-10-29T11:39:47.836Z",
+    "updatedAt": "2026-10-29T11:39:47.836Z"
+  },
+  {
+    "id": "apt_1793286870870_9aad3f",
+    "salonId": "salon_apex_01",
+    "customerId": "usr_1793286867549_0mds0",
+    "customerName": "Priya Mehta",
+    "customerPhone": "+91 99887 76655",
+    "customerEmail": "cust_1793286862476@test.uplookz.com",
+    "serviceIds": [
+      "srv_01"
+    ],
+    "serviceNames": [
+      "Executive Haircut & Styling"
+    ],
+    "staffId": null,
+    "staffName": "Any Available Stylist",
+    "date": "2026-10-30",
+    "time": "10:00 AM",
+    "durationMinutes": 45,
+    "totalAmount": 500,
+    "status": "cancelled",
+    "paymentStatus": "pending",
+    "paymentMethod": "UPI / Cash",
+    "notes": "Please keep it neat",
+    "createdAt": "2026-10-29T15:14:30.870Z",
+    "updatedAt": "2026-10-29T15:14:31.139Z",
+    "cancellationReason": "Change of schedule",
+    "cancelledAt": "2026-10-29T15:14:31.139Z"
+  },
+  {
+    "id": "apt_1793286871155_ba3093",
+    "salonId": "salon_apex_01",
+    "customerId": "usr_1793286867549_0mds0",
+    "customerName": "Priya Mehta",
+    "customerPhone": "+91 99887 76655",
+    "customerEmail": "cust_1793286862476@test.uplookz.com",
+    "serviceIds": [
+      "srv_01"
+    ],
+    "serviceNames": [
+      "Executive Haircut & Styling"
+    ],
+    "staffId": null,
+    "staffName": "Any Available Stylist",
+    "date": "2026-10-30",
+    "time": "09:00 AM",
+    "durationMinutes": 45,
+    "totalAmount": 500,
+    "status": "cancelled",
+    "paymentStatus": "pending",
+    "paymentMethod": "UPI / Cash",
+    "notes": "",
+    "createdAt": "2026-10-29T15:14:31.155Z",
+    "updatedAt": "2026-10-29T15:24:32.240Z"
+  },
+  {
+    "id": "apt_1793286922147_07478f",
+    "salonId": "salon_apex_01",
+    "customerId": "usr_1793286918945_smkp1",
+    "customerName": "Priya Mehta",
+    "customerPhone": "+91 99887 76655",
+    "customerEmail": "cust_1793286916221@test.uplookz.com",
+    "serviceIds": [
+      "srv_01"
+    ],
+    "serviceNames": [
+      "Executive Haircut & Styling"
+    ],
+    "staffId": null,
+    "staffName": "Any Available Stylist",
+    "date": "2026-10-30",
+    "time": "11:00 AM",
+    "durationMinutes": 45,
+    "totalAmount": 500,
+    "status": "cancelled",
+    "paymentStatus": "pending",
+    "paymentMethod": "UPI / Cash",
+    "notes": "Please keep it neat",
+    "createdAt": "2026-10-29T15:15:22.147Z",
+    "updatedAt": "2026-10-29T15:15:22.374Z",
+    "cancellationReason": "Change of schedule",
+    "cancelledAt": "2026-10-29T15:15:22.374Z"
+  },
+  {
+    "id": "apt_1793286922404_92d86a",
+    "salonId": "salon_apex_01",
+    "customerId": "usr_1793286918945_smkp1",
+    "customerName": "Priya Mehta",
+    "customerPhone": "+91 99887 76655",
+    "customerEmail": "cust_1793286916221@test.uplookz.com",
+    "serviceIds": [
+      "srv_01"
+    ],
+    "serviceNames": [
+      "Executive Haircut & Styling"
+    ],
+    "staffId": null,
+    "staffName": "Any Available Stylist",
+    "date": "2026-10-30",
+    "time": "10:00 AM",
+    "durationMinutes": 45,
+    "totalAmount": 500,
+    "status": "completed",
+    "paymentStatus": "paid",
+    "paymentMethod": "UPI / Cash",
+    "notes": "",
+    "createdAt": "2026-10-29T15:15:22.404Z",
+    "updatedAt": "2026-10-29T15:15:22.412Z"
+  },
+  {
+    "id": "apt_1793287152897_61f7ca",
+    "salonId": "salon_apex_01",
+    "customerId": "usr_customer_01",
+    "customerName": "Prince Ghinaiya",
+    "customerPhone": "+91 98765 01234",
+    "customerEmail": "ghinaiyaprince12@gmail.com",
+    "serviceIds": [
+      "srv_01"
+    ],
+    "serviceNames": [
+      "Executive Haircut & Styling"
+    ],
+    "staffId": null,
+    "staffName": "Any Available Stylist",
+    "date": "2026-10-30",
+    "time": "11:00 AM",
+    "durationMinutes": 45,
+    "totalAmount": 500,
+    "status": "arrived",
+    "paymentStatus": "pending",
+    "paymentMethod": "UPI / Cash",
+    "notes": "",
+    "createdAt": "2026-10-29T15:19:12.897Z",
+    "updatedAt": "2026-10-29T15:24:36.899Z"
+  },
+  {
+    "id": "apt_1793287355860_60e471",
+    "salonId": "salon_apex_01",
+    "customerId": "usr_customer_01",
+    "customerName": "Prince Ghinaiya",
+    "customerPhone": "+91 98765 01234",
+    "customerEmail": "ghinaiyaprince12@gmail.com",
+    "serviceIds": [
+      "srv_01"
+    ],
+    "serviceNames": [
+      "Executive Haircut & Styling"
+    ],
+    "staffId": null,
+    "staffName": "Any Available Stylist",
+    "date": "2026-10-30",
+    "time": "12:00 PM",
+    "durationMinutes": 45,
+    "totalAmount": 500,
+    "status": "arrived",
+    "paymentStatus": "pending",
+    "paymentMethod": "UPI / Cash",
+    "notes": "",
+    "createdAt": "2026-10-29T15:22:35.861Z",
+    "updatedAt": "2026-10-29T15:24:39.169Z"
+  },
+  {
+    "id": "apt_1793288209560_4b8e3e",
+    "salonId": "salon_apex_01",
+    "customerId": "usr_customer_01",
+    "customerName": "Prince Ghinaiya",
+    "customerPhone": "+91 98765 01234",
+    "customerEmail": "ghinaiyaprince12@gmail.com",
+    "serviceIds": [
+      "srv_01"
+    ],
+    "serviceNames": [
+      "Executive Haircut & Styling"
+    ],
+    "staffId": null,
+    "staffName": "Any Available Stylist",
+    "date": "2026-11-06",
+    "time": "09:00 AM",
+    "durationMinutes": 45,
+    "totalAmount": 500,
+    "status": "confirmed",
+    "paymentStatus": "pending",
+    "paymentMethod": "UPI / Cash",
+    "notes": "",
+    "createdAt": "2026-10-29T15:36:49.560Z",
+    "updatedAt": "2026-10-29T15:36:49.560Z"
   }
 ]

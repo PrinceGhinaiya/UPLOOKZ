@@ -48,17 +48,30 @@ export function minutesToTimeString(totalMinutes) {
 }
 
 /**
+ * Helper to get current date, time, and month in Asia/Kolkata timezone
+ */
+export function getNowInIST() {
+  const now = new Date();
+  const dateStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(now);
+  const timeStr = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Kolkata',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  }).format(now);
+  const monthStr = dateStr.slice(0, 7);
+  return { now, dateStr, timeStr, monthStr };
+}
+
+/**
  * ============================================================
  * 1. SALON PROFILE MANAGEMENT
  * ============================================================
  */
 export async function getSalonByOwner(ownerId) {
+  if (!ownerId) return null;
   const salons = readData('salons.json', []);
-  let salon = salons.find((s) => s.ownerId === ownerId);
-  // Fallback for dev mode: if not found, return primary salon
-  if (!salon && salons.length > 0) {
-    salon = salons[0];
-  }
+  const salon = salons.find((s) => s.ownerId === ownerId);
   return salon || null;
 }
 
@@ -73,20 +86,20 @@ export async function createSalon(ownerId, salonData) {
     id: generateId('salon'),
     ownerId,
     name: salonData.name || 'New Salon',
-    tagline: salonData.tagline || '',
-    description: salonData.description || '',
+    tagline: salonData.tagline || 'Premium Styling & Grooming',
+    description: salonData.description || 'Welcome to our salon. We offer top tier styling and grooming services.',
     phone: salonData.phone || '',
     email: salonData.email || '',
     address: salonData.address || '',
-    city: salonData.city || '',
-    state: salonData.state || '',
-    pincode: salonData.pincode || '',
-    openingTime: salonData.openingTime || '09:00',
-    closingTime: salonData.closingTime || '21:00',
-    workingDays: salonData.workingDays || ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+    city: salonData.city || 'Mumbai',
+    state: salonData.state || 'Maharashtra',
+    pincode: salonData.pincode || '400001',
+    openingTime: salonData.openingTime || '09:00 AM',
+    closingTime: salonData.closingTime || '09:00 PM',
+    workingDays: salonData.workingDays || ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
     holidays: salonData.holidays || [],
-    amenities: salonData.amenities || ['Air Conditioning', 'Wi-Fi'],
-    specialties: salonData.specialties || ['Haircuts'],
+    amenities: salonData.amenities || ['Air Conditioning', 'Wi-Fi', 'UPI & Card Accepted'],
+    specialties: salonData.specialties || ['Haircuts', 'Styling'],
     policies: salonData.policies || {
       cancellationHours: 2,
       cancellationPolicy: 'Free cancellation up to 2 hours prior to appointment.',
@@ -98,7 +111,7 @@ export async function createSalon(ownerId, salonData) {
     gallery: salonData.gallery || [],
     rating: 5.0,
     reviewCount: 0,
-    verified: false,
+    verified: true,
     active: true,
     createdAt: new Date().toISOString()
   };
@@ -122,9 +135,40 @@ export async function createSalon(ownerId, salonData) {
     active: true,
     isManager: true,
     rating: 5.0,
-    reviewsCount: 0
+    reviewsCount: 0,
+    createdAt: new Date().toISOString()
   });
   writeData('staff.json', staffList);
+
+  // Auto-seed starter services
+  const servicesList = readData('services.json', []);
+  servicesList.push(
+    {
+      id: generateId('srv'),
+      salonId: newSalon.id,
+      name: 'Classic Haircut & Styling',
+      category: 'Hair',
+      price: 450,
+      durationMinutes: 40,
+      description: 'Precision cut, wash, and master style finish.',
+      active: true,
+      image: '',
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: generateId('srv'),
+      salonId: newSalon.id,
+      name: 'Beard Trim & Shape',
+      category: 'Beard & Shave',
+      price: 300,
+      durationMinutes: 25,
+      description: 'Clean line shaping and conditioning oil treatment.',
+      active: true,
+      image: '',
+      updatedAt: new Date().toISOString()
+    }
+  );
+  writeData('services.json', servicesList);
 
   return newSalon;
 }
@@ -315,6 +359,38 @@ export async function deleteStaff(salonId, staffId) {
 }
 
 /**
+ * Helper to get current date and time in a specific timezone (defaults to Asia/Kolkata)
+ */
+export function getNowInTimezone(timeZone = 'Asia/Kolkata') {
+  const now = new Date();
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
+  const parts = formatter.formatToParts(now);
+  const partMap = {};
+  for (const p of parts) partMap[p.type] = p.value;
+
+  const year = partMap.year;
+  const month = partMap.month;
+  const day = partMap.day;
+  const hour = parseInt(partMap.hour, 10);
+  const minute = parseInt(partMap.minute, 10);
+
+  const dateStr = `${year}-${month}-${day}`;
+  const minutesSinceMidnight = hour * 60 + minute;
+  const dayName = new Intl.DateTimeFormat('en-US', { timeZone, weekday: 'long' }).format(now);
+
+  return { dateStr, hour, minute, minutesSinceMidnight, dayName };
+}
+
+/**
  * ============================================================
  * 4. APPOINTMENT MANAGEMENT & CONFLICT CHECKING
  * ============================================================
@@ -323,20 +399,48 @@ export async function checkAvailability(salonId, date, timeStr, durationMinutes,
   const startMins = timeStringToMinutes(timeStr);
   const endMins = startMins + durationMinutes;
 
-  // 1. Check Salon Working Hours
+  // 1. Timezone and Past Date / Time Validation (Asia/Kolkata)
+  const now = getNowInTimezone('Asia/Kolkata');
+  if (date < now.dateStr) {
+    return { available: false, reason: 'Cannot book an appointment for a past date.' };
+  }
+  if (date === now.dateStr && startMins <= now.minutesSinceMidnight + 10) {
+    return {
+      available: false,
+      reason: 'The selected time slot has already passed for today. Please select an upcoming slot.'
+    };
+  }
+
+  // 2. Check Salon Working Hours & Working Days
   const salon = await getSalonById(salonId);
   if (salon) {
-    const salonOpen = timeStringToMinutes(salon.openingTime);
-    const salonClose = timeStringToMinutes(salon.closingTime);
+    // Check closed day of week
+    const parts = date.split('-').map(Number);
+    if (parts.length === 3) {
+      const dateObj = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2], 12, 0, 0));
+      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const dayOfWeek = dayNames[dateObj.getUTCDay()];
+      if (salon.workingDays && Array.isArray(salon.workingDays) && salon.workingDays.length > 0) {
+        if (!salon.workingDays.includes(dayOfWeek)) {
+          return { available: false, reason: `${salon.name} is closed on ${dayOfWeek}s.` };
+        }
+      }
+      if (salon.holidays && Array.isArray(salon.holidays) && salon.holidays.includes(date)) {
+        return { available: false, reason: `${salon.name} is closed for holiday on this date.` };
+      }
+    }
+
+    const salonOpen = timeStringToMinutes(salon.openingTime || '09:00 AM');
+    const salonClose = timeStringToMinutes(salon.closingTime || '09:00 PM');
     if (startMins < salonOpen || endMins > salonClose) {
       return {
         available: false,
-        reason: `Salon operating hours are ${salon.openingTime} to ${salon.closingTime}.`
+        reason: `Salon operating hours are ${salon.openingTime || '09:00 AM'} to ${salon.closingTime || '09:00 PM'}.`
       };
     }
   }
 
-  // 2. Check Blocked Slots
+  // 3. Check Blocked Slots
   const blockedSlots = readData('blocked_slots.json', []);
   const hasBlock = blockedSlots.some((blk) => {
     if (blk.salonId !== salonId || blk.date !== date) return false;
@@ -353,25 +457,48 @@ export async function checkAvailability(salonId, date, timeStr, durationMinutes,
     };
   }
 
-  // 3. Check Conflicting Appointments for the specified staff member
+  // 4. Check Conflicting Appointments
   const appointments = readData('appointments.json', []);
-  const activeAppointments = appointments.filter((apt) => {
-    if (apt.salonId !== salonId || apt.date !== date) return false;
-    if (apt.status === 'cancelled') return false;
-    if (excludeAptId && apt.id === excludeAptId) return false;
-    if (staffId && apt.staffId && apt.staffId !== staffId) return false;
-    return true;
-  });
 
-  for (const apt of activeAppointments) {
-    const aStart = timeStringToMinutes(apt.time);
-    const aEnd = aStart + (apt.durationMinutes || 30);
-    // Check overlap: max(start1, start2) < min(end1, end2)
-    if (Math.max(startMins, aStart) < Math.min(endMins, aEnd)) {
+  // If a specific staff member is requested
+  if (staffId && staffId !== 'any') {
+    const conflictApt = appointments.find((apt) => {
+      if (apt.salonId !== salonId || apt.date !== date) return false;
+      if (apt.status === 'cancelled') return false;
+      if (excludeAptId && apt.id === excludeAptId) return false;
+      if (apt.staffId !== staffId) return false;
+
+      const aStart = timeStringToMinutes(apt.time);
+      const aEnd = aStart + (apt.durationMinutes || 30);
+      return Math.max(startMins, aStart) < Math.min(endMins, aEnd);
+    });
+
+    if (conflictApt) {
       return {
         available: false,
-        conflictAppointment: apt,
-        reason: `Slot conflicts with an existing appointment (${apt.time} - ${apt.customerName} with ${apt.staffName || 'stylist'}).`
+        conflictAppointment: conflictApt,
+        reason: `Slot conflicts with an existing appointment with ${conflictApt.staffName || 'this stylist'}.`
+      };
+    }
+  } else {
+    // If 'any' stylist requested, check overall staff capacity
+    const allStaff = readData('staff.json', []).filter((s) => s.salonId === salonId && s.active !== false);
+    const staffCapacity = allStaff.length > 0 ? allStaff.length : 3;
+
+    const overlappingCount = appointments.filter((apt) => {
+      if (apt.salonId !== salonId || apt.date !== date) return false;
+      if (apt.status === 'cancelled') return false;
+      if (excludeAptId && apt.id === excludeAptId) return false;
+
+      const aStart = timeStringToMinutes(apt.time);
+      const aEnd = aStart + (apt.durationMinutes || 30);
+      return Math.max(startMins, aStart) < Math.min(endMins, aEnd);
+    }).length;
+
+    if (overlappingCount >= staffCapacity) {
+      return {
+        available: false,
+        reason: 'All stylists are fully booked for this time slot. Please select another slot.'
       };
     }
   }
@@ -412,28 +539,64 @@ export async function getAppointments(salonId, filters = {}) {
 }
 
 export async function createAppointment(salonId, appointmentData) {
+  if (!salonId) {
+    throw new Error('Salon ID is required to book an appointment.');
+  }
+
+  // 1. Validate salon existence and active status
+  const salons = readData('salons.json', []);
+  const targetSalon = salons.find((s) => s.id === salonId && s.active !== false);
+  if (!targetSalon) {
+    throw new Error('Selected salon does not exist or is inactive.');
+  }
+
   const { customerName, customerPhone, customerEmail, serviceIds, staffId, date, time, notes } = appointmentData;
 
   if (!customerName || !date || !time) {
     throw new Error('Customer name, date, and time are required.');
   }
 
-  // Determine services, duration, and total amount
+  // 2. Validate services and ensure they strictly belong to THIS salon
   const allServices = readData('services.json', []);
-  const selectedServices = allServices.filter((s) => serviceIds && serviceIds.includes(s.id));
-  const serviceNames = selectedServices.map((s) => s.name);
-  const durationMinutes = selectedServices.reduce((sum, s) => sum + (s.durationMinutes || 30), 0) || 45;
-  const totalAmount = selectedServices.reduce((sum, s) => sum + (s.price || 0), 0) || 500;
+  let selectedServices = [];
+  if (serviceIds && Array.isArray(serviceIds) && serviceIds.length > 0) {
+    selectedServices = allServices.filter((s) => serviceIds.includes(s.id) && s.active !== false);
+    for (const reqServiceId of serviceIds) {
+      const match = selectedServices.find((s) => s.id === reqServiceId);
+      if (!match) {
+        throw new Error(`Service ID "${reqServiceId}" was not found or is inactive.`);
+      }
+      if (match.salonId !== salonId) {
+        throw new Error(`Service "${match.name}" belongs to another salon and cannot be booked at ${targetSalon.name}.`);
+      }
+    }
+  }
 
-  // Determine staff name
+  const serviceNames = selectedServices.length > 0
+    ? selectedServices.map((s) => s.name)
+    : [appointmentData.serviceName || 'Custom Grooming Service'];
+  const durationMinutes = selectedServices.length > 0
+    ? selectedServices.reduce((sum, s) => sum + (s.durationMinutes || 30), 0)
+    : (appointmentData.durationMinutes || 30);
+  const totalAmount = selectedServices.length > 0
+    ? selectedServices.reduce((sum, s) => sum + (s.price || 0), 0)
+    : (appointmentData.totalAmount !== undefined ? appointmentData.totalAmount : 0);
+
+  // 3. Validate staff member strictly belongs to THIS salon
   let staffName = 'Any Available Stylist';
   if (staffId) {
     const allStaff = readData('staff.json', []);
     const foundStaff = allStaff.find((st) => st.id === staffId);
-    if (foundStaff) staffName = foundStaff.name;
+    if (!foundStaff) {
+      throw new Error(`Stylist ID "${staffId}" was not found.`);
+    }
+    if (foundStaff.salonId !== salonId) {
+      throw new Error(`Stylist "${foundStaff.name}" does not belong to ${targetSalon.name}.`);
+    }
+    staffName = foundStaff.name;
   }
 
-  // Validate server availability & double-booking prevention
+  // 4. Validate server availability & double-booking prevention with Asia/Kolkata timezone buffer
   const avail = await checkAvailability(salonId, date, time, durationMinutes, staffId);
   if (!avail.available) {
     throw new Error(avail.reason);
@@ -443,12 +606,13 @@ export async function createAppointment(salonId, appointmentData) {
   const newAppointment = {
     id: generateId('apt'),
     salonId,
+    salonName: targetSalon.name,
     customerId: appointmentData.customerId || generateId('cust'),
     customerName: customerName.trim(),
     customerPhone: customerPhone ? customerPhone.trim() : '',
     customerEmail: customerEmail ? customerEmail.trim() : '',
     serviceIds: serviceIds || [],
-    serviceNames: serviceNames.length > 0 ? serviceNames : [appointmentData.serviceName || 'Custom Service'],
+    serviceNames,
     staffId: staffId || null,
     staffName,
     date,
@@ -457,7 +621,7 @@ export async function createAppointment(salonId, appointmentData) {
     totalAmount,
     status: appointmentData.status || 'confirmed',
     paymentStatus: appointmentData.paymentStatus || 'pending',
-    paymentMethod: appointmentData.paymentMethod || 'UPI / Cash',
+    paymentMethod: appointmentData.paymentMethod || 'Pay at Salon',
     notes: notes ? notes.trim() : '',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
@@ -477,29 +641,81 @@ export async function createAppointment(salonId, appointmentData) {
   return newAppointment;
 }
 
-export async function updateAppointmentStatus(salonId, appointmentId, status, notes = '') {
+export async function updateAppointmentStatus(salonId, appointmentId, status, notes = '', paymentData = null) {
   const appointments = readData('appointments.json', []);
   const index = appointments.findIndex((a) => a.id === appointmentId && a.salonId === salonId);
   if (index === -1) {
     throw new Error('Appointment not found.');
   }
 
-  const prevStatus = appointments[index].status;
+  const prevStatus = appointments[index].status || 'confirmed';
+
+  if (status === prevStatus) {
+    if (notes) appointments[index].notes = notes;
+    writeData('appointments.json', appointments);
+    return appointments[index];
+  }
+
+  // Terminal states cannot be changed
+  if (prevStatus === 'completed') {
+    throw new Error('Cannot change status of a completed appointment.');
+  }
+  if (prevStatus === 'cancelled') {
+    throw new Error('Cannot change status of a cancelled appointment.');
+  }
+
+  // Allowed transitions across complete appointment lifecycle
+  const allowedTransitions = {
+    pending: ['confirmed', 'arrived', 'cancelled'],
+    confirmed: ['arrived', 'in_service', 'completed', 'cancelled'],
+    arrived: ['in_service', 'completed', 'confirmed', 'cancelled'],
+    in_service: ['completed', 'cancelled']
+  };
+
+  const validNext = allowedTransitions[prevStatus];
+  if (!validNext || !validNext.includes(status)) {
+    throw new Error(`Invalid status transition from "${prevStatus}" to "${status}".`);
+  }
+
   appointments[index].status = status;
   appointments[index].updatedAt = new Date().toISOString();
   if (notes) appointments[index].notes = notes;
 
-  // If status is changed to completed and payment was pending, mark as paid and generate transaction
+  // Track timestamps for lifecycle milestones
+  if (status === 'arrived') {
+    const ist = getNowInIST();
+    appointments[index].arrivedAt = `${ist.dateStr} ${ist.timeStr}`;
+    createNotification(salonId, {
+      type: 'appointment',
+      title: 'Customer Arrived',
+      message: `${appointments[index].customerName} has arrived at the salon for their appointment.`,
+      link: 'appointments'
+    });
+  }
+
+  if (status === 'in_service') {
+    const ist = getNowInIST();
+    appointments[index].serviceStartedAt = `${ist.dateStr} ${ist.timeStr}`;
+  }
+
   if (status === 'completed') {
+    const ist = getNowInIST();
+    appointments[index].completedAt = `${ist.dateStr} ${ist.timeStr}`;
+  }
+
+  // Handle optional explicit payment recording upon completion
+  if (status === 'completed' && paymentData && paymentData.paymentStatus === 'paid') {
     appointments[index].paymentStatus = 'paid';
+    if (paymentData.paymentMethod) appointments[index].paymentMethod = paymentData.paymentMethod;
+    const ist = getNowInIST();
     recordTransaction({
       salonId,
       appointmentId,
       customerName: appointments[index].customerName,
-      amount: appointments[index].totalAmount,
-      paymentMethod: appointments[index].paymentMethod || 'UPI / GPay',
+      amount: paymentData.amount !== undefined ? parseFloat(paymentData.amount) : appointments[index].totalAmount,
+      paymentMethod: appointments[index].paymentMethod || 'Cash',
       status: 'completed',
-      date: appointments[index].date
+      date: ist.dateStr
     });
   }
 
@@ -516,6 +732,55 @@ export async function updateAppointmentStatus(salonId, appointmentId, status, no
   }
 
   return appointments[index];
+}
+
+export async function updateAppointmentPaymentStatus(salonId, appointmentId, paymentStatus, paymentMethod = 'Cash', customAmount = null) {
+  const allowed = ['unpaid', 'pending', 'paid', 'refunded'];
+  if (!allowed.includes(paymentStatus)) {
+    throw new Error(`Invalid payment status "${paymentStatus}". Allowed: ${allowed.join(', ')}`);
+  }
+
+  const appointments = readData('appointments.json', []);
+  const index = appointments.findIndex((a) => a.id === appointmentId && a.salonId === salonId);
+  if (index === -1) {
+    throw new Error('Appointment not found.');
+  }
+
+  const apt = appointments[index];
+  apt.paymentStatus = paymentStatus;
+  if (paymentMethod) apt.paymentMethod = paymentMethod;
+  apt.updatedAt = new Date().toISOString();
+
+  const finalAmount = customAmount !== null && customAmount !== undefined && !isNaN(customAmount)
+    ? parseFloat(customAmount)
+    : (apt.totalAmount || 0);
+
+  const ist = getNowInIST();
+
+  if (paymentStatus === 'paid') {
+    recordTransaction({
+      salonId,
+      appointmentId,
+      customerName: apt.customerName,
+      amount: finalAmount,
+      paymentMethod: apt.paymentMethod || 'Cash',
+      status: 'completed',
+      date: ist.dateStr
+    });
+  } else if (paymentStatus === 'refunded') {
+    recordTransaction({
+      salonId,
+      appointmentId,
+      customerName: apt.customerName,
+      amount: -Math.abs(finalAmount),
+      paymentMethod: apt.paymentMethod || 'Refund',
+      status: 'refunded',
+      date: ist.dateStr
+    });
+  }
+
+  writeData('appointments.json', appointments);
+  return apt;
 }
 
 export async function rescheduleAppointment(salonId, appointmentId, newDate, newTime, newStaffId = null) {
@@ -820,82 +1085,142 @@ export async function updateCustomerNotes(salonId, customerId, notesData) {
  */
 export function recordTransaction(txData) {
   const transactions = readData('transactions.json', []);
+  const ist = getNowInIST();
+
+  if (txData.appointmentId) {
+    const existingIndex = transactions.findIndex(
+      (t) => t.appointmentId === txData.appointmentId && t.salonId === txData.salonId
+    );
+    if (existingIndex !== -1) {
+      const existing = transactions[existingIndex];
+      existing.amount = parseFloat(txData.amount !== undefined ? txData.amount : existing.amount) || 0;
+      existing.currency = txData.currency || existing.currency || 'INR';
+      existing.paymentMethod = txData.paymentMethod || existing.paymentMethod || 'Cash';
+      existing.status = txData.status || existing.status || 'completed';
+      existing.customerName = txData.customerName || existing.customerName;
+      if (txData.payuTxnId) existing.payuTxnId = txData.payuTxnId;
+      if (txData.payuPaymentId) existing.payuPaymentId = txData.payuPaymentId;
+      if (txData.payuMode) existing.payuMode = txData.payuMode;
+      existing.updatedAt = new Date().toISOString();
+      writeData('transactions.json', transactions);
+      return existing;
+    }
+  }
+
   const newTx = {
     id: generateId('txn'),
     salonId: txData.salonId,
     appointmentId: txData.appointmentId || null,
+    bookingReference: txData.appointmentId || txData.bookingReference || '',
     customerName: txData.customerName || 'Customer',
     amount: parseFloat(txData.amount) || 0,
-    paymentMethod: txData.paymentMethod || 'UPI / Cash',
+    currency: txData.currency || 'INR',
+    paymentMethod: txData.paymentMethod || 'Cash',
+    payuTxnId: txData.payuTxnId || null,
+    payuPaymentId: txData.payuPaymentId || null,
+    payuMode: txData.payuMode || null,
     status: txData.status || 'completed',
-    date: txData.date || new Date().toISOString().split('T')[0],
-    timestamp: new Date().toISOString()
+    date: txData.date || ist.dateStr,
+    timestamp: txData.timestamp || new Date().toISOString(),
+    createdAt: new Date().toISOString()
   };
+
   transactions.push(newTx);
   writeData('transactions.json', transactions);
   return newTx;
 }
 
-export async function getAnalytics(salonId, timeframe = 'month') {
+export async function getAnalytics(salonId, timeframe = 'month', options = {}) {
   const allTx = readData('transactions.json', []).filter((t) => t.salonId === salonId && t.status === 'completed');
   const allApts = readData('appointments.json', []).filter((a) => a.salonId === salonId);
   const allStaff = readData('staff.json', []).filter((s) => s.salonId === salonId);
 
-  const todayStr = '2026-10-28'; // Reference current date
+  const ist = getNowInIST();
+  const todayStr = ist.dateStr; // e.g. 2026-10-30 in Asia/Kolkata
+  const currentMonthStr = ist.monthStr; // e.g. 2026-10
 
-  // 1. Calculate Revenue Breakdown
+  // 1. Calculate Revenue Breakdown dynamically in Asia/Kolkata
+  // Today's revenue: completed transactions where date === todayStr (or timestamp matches today)
   const todayRevenue = allTx
-    .filter((t) => t.date === todayStr)
+    .filter((t) => t.date === todayStr || (t.timestamp && t.timestamp.startsWith(todayStr)))
     .reduce((sum, t) => sum + (t.amount || 0), 0);
 
-  // Last 7 days
-  const sevenDaysAgo = new Date('2026-10-21');
+  // Rolling 7 days revenue (ending today)
+  const past7Days = [];
+  const nowMs = Date.now();
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(nowMs - i * 24 * 60 * 60 * 1000);
+    const dStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(d);
+    const dayName = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Kolkata', weekday: 'short' }).format(d);
+    past7Days.push({ date: dStr, day: dayName });
+  }
+  const weekStartStr = past7Days[0].date;
+
   const weekRevenue = allTx
-    .filter((t) => new Date(t.date) >= sevenDaysAgo)
+    .filter((t) => {
+      const txDate = t.date || (t.timestamp ? t.timestamp.slice(0, 10) : '');
+      return txDate >= weekStartStr && txDate <= todayStr;
+    })
     .reduce((sum, t) => sum + (t.amount || 0), 0);
 
-  // Month (October 2026)
+  // Month revenue (current month)
   const monthRevenue = allTx
-    .filter((t) => t.date.startsWith('2026-10'))
+    .filter((t) => {
+      const txDate = t.date || (t.timestamp ? t.timestamp.slice(0, 10) : '');
+      return txDate.startsWith(currentMonthStr);
+    })
     .reduce((sum, t) => sum + (t.amount || 0), 0);
 
-  // Total Lifetime
+  // Custom date range revenue if provided
+  let customRevenue = 0;
+  if (options.startDate && options.endDate) {
+    customRevenue = allTx
+      .filter((t) => {
+        const txDate = t.date || (t.timestamp ? t.timestamp.slice(0, 10) : '');
+        return txDate >= options.startDate && txDate <= options.endDate;
+      })
+      .reduce((sum, t) => sum + (t.amount || 0), 0);
+  }
+
+  // Total Lifetime Revenue
   const totalRevenue = allTx.reduce((sum, t) => sum + (t.amount || 0), 0);
 
   // 2. Appointment metrics
   const totalAppointments = allApts.length;
   const completedAppointments = allApts.filter((a) => a.status === 'completed').length;
+  const completedPaidAppointments = allApts.filter((a) => a.status === 'completed' && a.paymentStatus === 'paid').length;
   const cancelledAppointments = allApts.filter((a) => a.status === 'cancelled').length;
   const completionRate = totalAppointments > 0 ? Math.round((completedAppointments / totalAppointments) * 100) : 0;
 
-  // 3. Popular Services
+  // 3. Service Breakdown & Popular Services (calculated strictly from paid completed appointments)
   const serviceStats = new Map();
   allApts.forEach((apt) => {
-    if (apt.serviceNames) {
+    if (apt.serviceNames && Array.isArray(apt.serviceNames)) {
       apt.serviceNames.forEach((sName) => {
-        const cur = serviceStats.get(sName) || { name: sName, bookings: 0, revenue: 0 };
+        const cur = serviceStats.get(sName) || { name: sName, bookings: 0, revenue: 0, paidBookings: 0 };
         cur.bookings += 1;
-        if (apt.status === 'completed') {
+        if (apt.status === 'completed' && apt.paymentStatus === 'paid') {
+          cur.paidBookings += 1;
           cur.revenue += Math.round((apt.totalAmount || 0) / apt.serviceNames.length);
         }
         serviceStats.set(sName, cur);
       });
     }
   });
-  const popularServices = Array.from(serviceStats.values()).sort((a, b) => b.bookings - a.bookings).slice(0, 5);
+  const popularServices = Array.from(serviceStats.values()).sort((a, b) => b.revenue - a.revenue || b.bookings - a.bookings).slice(0, 5);
 
-  // 4. Staff Performance
+  // 4. Staff Performance (strictly from paid completed bookings)
   const staffMetrics = allStaff.map((st) => {
     const stApts = allApts.filter((a) => a.staffId === st.id);
-    const stCompleted = stApts.filter((a) => a.status === 'completed');
-    const revenue = stCompleted.reduce((sum, a) => sum + (a.totalAmount || 0), 0);
+    const stCompletedPaid = stApts.filter((a) => a.status === 'completed' && a.paymentStatus === 'paid');
+    const revenue = stCompletedPaid.reduce((sum, a) => sum + (a.totalAmount || 0), 0);
     return {
       id: st.id,
       name: st.name,
       role: st.role,
-      appointmentsHandled: stCompleted.length,
+      appointmentsHandled: stCompletedPaid.length,
       revenueGenerated: revenue,
-      rating: st.rating || 4.9
+      rating: st.rating || 5.0
     };
   });
 
@@ -905,37 +1230,40 @@ export async function getAnalytics(salonId, timeframe = 'month') {
     .filter((a) => a.status === 'completed')
     .forEach((a) => {
       const key = a.customerPhone || a.customerName;
-      customerVisits.set(key, (customerVisits.get(key) || 0) + 1);
+      if (key) {
+        customerVisits.set(key, (customerVisits.get(key) || 0) + 1);
+      }
     });
   const totalCustomers = customerVisits.size;
   const repeatCustomers = Array.from(customerVisits.values()).filter((v) => v > 1).length;
   const returnRate = totalCustomers > 0 ? Math.round((repeatCustomers / totalCustomers) * 100) : 0;
 
-  // 6. Revenue Trends by Date (Last 7 days)
-  const trends = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date('2026-10-28');
-    d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().split('T')[0];
-    const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
-    const dayTotal = allTx.filter((t) => t.date === dateStr).reduce((sum, t) => sum + (t.amount || 0), 0);
-    trends.push({ date: dateStr, day: dayName, revenue: dayTotal });
-  }
+  // 6. Dynamic Rolling 7-Day Revenue Trends
+  const trends = past7Days.map(({ date, day }) => {
+    const dayTotal = allTx
+      .filter((t) => t.date === date || (t.timestamp && t.timestamp.startsWith(date)))
+      .reduce((sum, t) => sum + (t.amount || 0), 0);
+    return { date, day, revenue: dayTotal };
+  });
 
   return {
     todayRevenue,
     weekRevenue,
     monthRevenue,
+    customRevenue,
     totalRevenue,
     totalAppointments,
     completedAppointments,
+    completedPaidAppointments,
     cancelledAppointments,
     completionRate,
     returnRate,
     popularServices,
     staffMetrics,
     revenueTrends: trends,
-    transactions: allTx.slice(-20) // recent 20
+    currentDate: todayStr,
+    currentMonth: currentMonthStr,
+    transactions: [...allTx].sort((a, b) => (b.timestamp || b.date || '').localeCompare(a.timestamp || a.date || '')).slice(0, 25)
   };
 }
 
@@ -1068,3 +1396,537 @@ export async function deleteBlockedSlot(salonId, slotId) {
   writeData('blocked_slots.json', slots);
   return { success: true };
 }
+
+/**
+ * ============================================================
+ * 11. CUSTOMER INTEGRATION & DISCOVERY
+ * ============================================================
+ */
+
+export async function getAvailableSlots(salonId, date, durationMinutes = 45, staffId = null) {
+  const salon = await getSalonById(salonId);
+  if (!salon) {
+    throw new Error('Salon not found.');
+  }
+
+  const now = getNowInTimezone('Asia/Kolkata');
+  if (date < now.dateStr) {
+    return { slots: [], isClosed: true, closedReason: 'Selected date is in the past.', totalAvailable: 0 };
+  }
+
+  // Check working days
+  const parts = date.split('-').map(Number);
+  if (parts.length === 3) {
+    const dateObj = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2], 12, 0, 0));
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayOfWeek = dayNames[dateObj.getUTCDay()];
+    if (salon.workingDays && Array.isArray(salon.workingDays) && salon.workingDays.length > 0) {
+      if (!salon.workingDays.includes(dayOfWeek)) {
+        return {
+          slots: [],
+          isClosed: true,
+          closedReason: `${salon.name} is closed on ${dayOfWeek}s. Please select another date.`,
+          totalAvailable: 0
+        };
+      }
+    }
+    if (salon.holidays && Array.isArray(salon.holidays) && salon.holidays.includes(date)) {
+      return {
+        slots: [],
+        isClosed: true,
+        closedReason: `${salon.name} is closed for holiday on this date.`,
+        totalAvailable: 0
+      };
+    }
+  }
+
+  const openMins = timeStringToMinutes(salon.openingTime || '09:00 AM');
+  const closeMins = timeStringToMinutes(salon.closingTime || '09:00 PM');
+  const duration = parseInt(durationMinutes, 10) || 45;
+
+  const slots = [];
+  for (let m = openMins; m + duration <= closeMins; m += 30) {
+    const timeStr = minutesToTimeString(m);
+    const avail = await checkAvailability(salonId, date, timeStr, duration, staffId);
+    slots.push({
+      time: timeStr,
+      minutes: m,
+      available: avail.available,
+      reason: avail.available ? null : avail.reason
+    });
+  }
+
+  const totalAvailable = slots.filter((s) => s.available).length;
+  return {
+    slots,
+    isClosed: false,
+    closedReason: null,
+    totalAvailable
+  };
+}
+
+/**
+ * Check if a salon is currently open in Asia/Kolkata timezone based on working hours, days, and holidays
+ */
+export function isSalonOpenNow(salon) {
+  if (!salon || salon.active === false) return false;
+  const now = getNowInTimezone('Asia/Kolkata');
+
+  // 1. Holiday check
+  const holidays = Array.isArray(salon.holidays)
+    ? salon.holidays
+    : (typeof salon.holidays === 'string' && salon.holidays.trim() ? salon.holidays.trim().split(/\s+/) : []);
+  if (holidays.includes(now.dateStr)) return false;
+
+  // 2. Working days check
+  let workingDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  if (Array.isArray(salon.workingDays) && salon.workingDays.length > 0) {
+    workingDays = salon.workingDays;
+  } else if (typeof salon.workingDays === 'string' && salon.workingDays.trim()) {
+    workingDays = salon.workingDays.trim().split(/\s+/);
+  }
+  if (!workingDays.includes(now.dayName)) return false;
+
+  // 3. Operating hours check
+  const openMins = timeStringToMinutes(salon.openingTime || '09:00 AM');
+  const closeMins = timeStringToMinutes(salon.closingTime || '09:00 PM');
+
+  return now.minutesSinceMidnight >= openMins && now.minutesSinceMidnight < closeMins;
+}
+
+export async function getAllSalons(filters = {}) {
+  let salons = readData('salons.json', []);
+  const allReviews = readData('reviews.json', []);
+  const allQueue = readData('queue.json', []);
+  const allServices = readData('services.json', []).filter((s) => s.active !== false);
+
+  salons = salons.filter((s) => s.active !== false);
+
+  // 1. Search Query across salon name, city, address, specialties AND service names/categories
+  if (filters.search) {
+    const q = filters.search.trim().toLowerCase();
+    salons = salons.filter((s) => {
+      const nameMatch = s.name && s.name.toLowerCase().includes(q);
+      const cityMatch = s.city && s.city.toLowerCase().includes(q);
+      const addressMatch = s.address && s.address.toLowerCase().includes(q);
+      const specMatch = Array.isArray(s.specialties)
+        ? s.specialties.some((sp) => sp.toLowerCase().includes(q))
+        : (typeof s.specialties === 'string' && s.specialties.toLowerCase().includes(q));
+
+      const salonServices = allServices.filter((srv) => srv.salonId === s.id);
+      const serviceMatch = salonServices.some((srv) =>
+        (srv.name && srv.name.toLowerCase().includes(q)) ||
+        (srv.category && srv.category.toLowerCase().includes(q)) ||
+        (srv.description && srv.description.toLowerCase().includes(q))
+      );
+
+      return nameMatch || cityMatch || addressMatch || specMatch || serviceMatch;
+    });
+  }
+
+  // 2. City Filter
+  if (filters.city && filters.city !== 'All Locations' && filters.city !== 'all') {
+    const c = filters.city.trim().toLowerCase();
+    salons = salons.filter((s) => s.city && s.city.toLowerCase().includes(c));
+  }
+
+  // 3. Category Filter (e.g. Haircut, Hair Styling, Beard Grooming, Facial, Hair Spa)
+  if (filters.category && filters.category !== 'All' && filters.category !== 'all') {
+    const cat = filters.category.trim().toLowerCase();
+    salons = salons.filter((s) => {
+      const salonServices = allServices.filter((srv) => srv.salonId === s.id);
+      return salonServices.some((srv) => {
+        const c = (srv.category || '').toLowerCase();
+        const n = (srv.name || '').toLowerCase();
+        return c.includes(cat) || n.includes(cat);
+      });
+    });
+  }
+
+  // 4. Enrich Salons with Ratings, Queue, Real-time Open Status, Starting Price, Categories
+  let enriched = salons.map((salon) => {
+    const salonReviews = allReviews.filter((r) => r.salonId === salon.id);
+    const totalReviews = salonReviews.length;
+    const avgRating = totalReviews > 0
+      ? parseFloat((salonReviews.reduce((sum, r) => sum + (r.rating || 5), 0) / totalReviews).toFixed(1))
+      : (salon.rating || 5.0);
+
+    const salonQueue = allQueue.filter((q) => q.salonId === salon.id && (q.status === 'waiting' || q.status === 'in_service'));
+    const waitingQueue = salonQueue.filter((q) => q.status === 'waiting');
+    const estimatedWait = waitingQueue.length > 0
+      ? (waitingQueue[waitingQueue.length - 1].estimatedWaitMinutes || waitingQueue.length * 15)
+      : (salon.queueStatus?.estimatedWaitMins || 0);
+
+    const salonServices = allServices.filter((s) => s.salonId === salon.id);
+    const prices = salonServices.map((s) => s.price).filter((p) => typeof p === 'number' && !isNaN(p));
+    const startingPrice = prices.length > 0 ? Math.min(...prices) : 0;
+    const maxServicePrice = prices.length > 0 ? Math.max(...prices) : 0;
+    const serviceCategories = Array.from(new Set(salonServices.map((s) => s.category || 'General')));
+    const openStatus = isSalonOpenNow(salon);
+
+    const gallery = Array.isArray(salon.gallery) ? salon.gallery : (salon.gallery ? [salon.gallery] : []);
+
+    return {
+      ...salon,
+      gallery,
+      rating: avgRating,
+      reviewCount: totalReviews > 0 ? totalReviews : (salon.reviewCount || 0),
+      liveQueueCount: waitingQueue.length,
+      estimatedWaitMinutes: estimatedWait,
+      liveQueue: {
+        waitingCount: waitingQueue.length,
+        estimatedWaitMinutes: estimatedWait
+      },
+      startingPrice,
+      maxServicePrice,
+      serviceCategories,
+      servicesCount: salonServices.length,
+      featuredServices: salonServices.slice(0, 4),
+      isOpen: openStatus
+    };
+  });
+
+  // 5. Min Rating Filter
+  if (filters.minRating) {
+    const minR = parseFloat(filters.minRating);
+    if (!isNaN(minR)) {
+      enriched = enriched.filter((s) => s.rating >= minR);
+    }
+  }
+
+  // 6. Max Price Filter
+  if (filters.maxPrice) {
+    const maxP = parseFloat(filters.maxPrice);
+    if (!isNaN(maxP)) {
+      enriched = enriched.filter((s) => s.startingPrice <= maxP);
+    }
+  }
+
+  // 7. Open Only Filter
+  if (filters.openOnly === 'true' || filters.openOnly === true) {
+    enriched = enriched.filter((s) => s.isOpen === true);
+  }
+
+  // 8. Sorting
+  const sortBy = filters.sortBy || 'relevance';
+  if (sortBy === 'rating') {
+    enriched.sort((a, b) => b.rating - a.rating);
+  } else if (sortBy === 'price_asc') {
+    enriched.sort((a, b) => a.startingPrice - b.startingPrice);
+  } else if (sortBy === 'price_desc') {
+    enriched.sort((a, b) => b.startingPrice - a.startingPrice);
+  } else if (sortBy === 'name') {
+    enriched.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  } else {
+    // Default: verified first, then highest rating
+    enriched.sort((a, b) => {
+      if (a.verified !== b.verified) return b.verified ? 1 : -1;
+      return b.rating - a.rating;
+    });
+  }
+
+  return enriched;
+}
+
+/**
+ * Live search suggestions for typeahead search dropdown
+ */
+export async function getSearchSuggestions(query = '') {
+  if (!query || typeof query !== 'string' || query.trim().length === 0) {
+    return { salons: [], services: [], categories: [], locations: [] };
+  }
+
+  const q = query.trim().toLowerCase();
+  const allSalons = readData('salons.json', []).filter((s) => s.active !== false);
+  const allServices = readData('services.json', []).filter((s) => s.active !== false);
+
+  // Matching salons
+  const matchedSalons = allSalons
+    .filter((s) => (s.name && s.name.toLowerCase().includes(q)) || (s.city && s.city.toLowerCase().includes(q)))
+    .slice(0, 5)
+    .map((s) => ({
+      id: s.id,
+      name: s.name,
+      city: s.city || '',
+      logo: s.logo || '',
+      cover: Array.isArray(s.gallery) && s.gallery.length > 0 ? s.gallery[0] : (s.logo || '')
+    }));
+
+  // Matching services
+  const matchedServices = [];
+  const seenServiceNames = new Set();
+  for (const s of allServices) {
+    if (s.name && s.name.toLowerCase().includes(q) && !seenServiceNames.has(s.name.toLowerCase())) {
+      seenServiceNames.add(s.name.toLowerCase());
+      const salon = allSalons.find((sl) => sl.id === s.salonId);
+      matchedServices.push({
+        id: s.id,
+        name: s.name,
+        category: s.category || 'General',
+        price: s.price,
+        salonId: s.salonId,
+        salonName: salon?.name || 'Partner Salon'
+      });
+      if (matchedServices.length >= 6) break;
+    }
+  }
+
+  // Matching categories
+  const standardCategories = ['Haircut', 'Hair Styling', 'Beard Grooming', 'Facial', 'Hair Spa', 'Massage', 'Color & Highlights', 'Grooming'];
+  const matchedCategories = standardCategories.filter((c) => c.toLowerCase().includes(q)).slice(0, 4);
+
+  // Matching locations/cities
+  const locations = Array.from(
+    new Set(allSalons.map((s) => s.city).filter((c) => c && c.toLowerCase().includes(q)))
+  ).slice(0, 4);
+
+  return {
+    salons: matchedSalons,
+    services: matchedServices,
+    categories: matchedCategories,
+    locations
+  };
+}
+
+/**
+ * Customer Favorites Management
+ */
+export async function getCustomerFavorites(userId) {
+  if (!userId) return [];
+  const users = readData('users.json', {});
+  const user = Object.values(users).find((u) => u.id === userId || u._id === userId);
+  const favIds = user?.favorites || [];
+  if (!Array.isArray(favIds) || favIds.length === 0) return [];
+  const allSalons = await getAllSalons();
+  return allSalons.filter((s) => favIds.includes(s.id));
+}
+
+export async function toggleCustomerFavorite(userId, salonId) {
+  if (!userId || !salonId) throw new Error('User ID and Salon ID are required.');
+  const users = readData('users.json', {});
+  let userKey = null;
+  let targetUser = null;
+
+  for (const [key, u] of Object.entries(users)) {
+    if (u.id === userId || u._id === userId) {
+      userKey = key;
+      targetUser = u;
+      break;
+    }
+  }
+
+  if (!targetUser) throw new Error('User not found.');
+
+  const currentFavs = Array.isArray(targetUser.favorites) ? [...targetUser.favorites] : [];
+  const existsIndex = currentFavs.indexOf(salonId);
+  let isFavorite = false;
+
+  if (existsIndex >= 0) {
+    currentFavs.splice(existsIndex, 1);
+    isFavorite = false;
+  } else {
+    currentFavs.push(salonId);
+    isFavorite = true;
+  }
+
+  targetUser.favorites = currentFavs;
+  users[userKey] = targetUser;
+  writeData('users.json', users);
+
+  return { success: true, isFavorite, favorites: currentFavs };
+}
+
+/**
+ * Customer Recently Viewed Salons Management
+ */
+export async function getCustomerRecentlyViewed(userId) {
+  if (!userId) return [];
+  const users = readData('users.json', {});
+  const user = Object.values(users).find((u) => u.id === userId || u._id === userId);
+  const viewedIds = user?.recentlyViewed || [];
+  if (!Array.isArray(viewedIds) || viewedIds.length === 0) return [];
+  const allSalons = await getAllSalons();
+  return viewedIds
+    .map((id) => allSalons.find((s) => s.id === id))
+    .filter(Boolean);
+}
+
+export async function recordCustomerRecentlyViewed(userId, salonId) {
+  if (!userId || !salonId) return { success: false };
+  const users = readData('users.json', {});
+  let userKey = null;
+  let targetUser = null;
+
+  for (const [key, u] of Object.entries(users)) {
+    if (u.id === userId || u._id === userId) {
+      userKey = key;
+      targetUser = u;
+      break;
+    }
+  }
+
+  if (!targetUser) return { success: false };
+
+  let viewed = Array.isArray(targetUser.recentlyViewed) ? [...targetUser.recentlyViewed] : [];
+  viewed = viewed.filter((id) => id !== salonId);
+  viewed.unshift(salonId);
+  if (viewed.length > 10) viewed = viewed.slice(0, 10);
+
+  targetUser.recentlyViewed = viewed;
+  users[userKey] = targetUser;
+  writeData('users.json', users);
+
+  return { success: true, recentlyViewed: viewed };
+}
+
+export async function addCustomerReview(salonId, appointmentId, customerId, customerName, rating, comment) {
+  if (!salonId || !appointmentId) {
+    throw new Error('Salon ID and Appointment ID are required.');
+  }
+
+  const appointments = readData('appointments.json', []);
+  const apt = appointments.find((a) => a.id === appointmentId && a.salonId === salonId);
+  if (!apt) {
+    throw new Error('Appointment not found.');
+  }
+
+  if (apt.status !== 'completed') {
+    throw new Error('Reviews can only be submitted for completed appointments.');
+  }
+
+  if (customerId && apt.customerId && apt.customerId !== customerId) {
+    throw new Error('You can only review your own appointments.');
+  }
+
+  const reviews = readData('reviews.json', []);
+  const existingReview = reviews.find((r) => r.appointmentId === appointmentId);
+  if (existingReview) {
+    throw new Error('You have already submitted a review for this appointment.');
+  }
+
+  const numRating = Math.max(1, Math.min(5, parseInt(rating, 10) || 5));
+  const newReview = {
+    id: generateId('rev'),
+    salonId,
+    appointmentId,
+    customerId: customerId || apt.customerId || generateId('cust'),
+    customerName: customerName || apt.customerName || 'Verified Customer',
+    rating: numRating,
+    comment: (comment || '').trim(),
+    date: new Date().toISOString().split('T')[0],
+    verifiedVisit: true,
+    serviceUsed: apt.serviceNames ? apt.serviceNames.join(', ') : 'Grooming Service',
+    ownerReply: null,
+    ownerReplyDate: null,
+    createdAt: new Date().toISOString()
+  };
+
+  reviews.unshift(newReview);
+  writeData('reviews.json', reviews);
+
+  // Recalculate average rating & review count for salon
+  const salonReviews = reviews.filter((r) => r.salonId === salonId);
+  const avg = parseFloat((salonReviews.reduce((sum, r) => sum + r.rating, 0) / salonReviews.length).toFixed(1));
+
+  const salons = readData('salons.json', []);
+  const salonIndex = salons.findIndex((s) => s.id === salonId);
+  if (salonIndex !== -1) {
+    salons[salonIndex].rating = avg;
+    salons[salonIndex].reviewCount = salonReviews.length;
+    writeData('salons.json', salons);
+  }
+
+  createNotification(salonId, {
+    type: 'review',
+    title: 'New Customer Review',
+    message: `${newReview.customerName} left a ${newReview.rating}★ review: "${newReview.comment.slice(0, 50)}..."`,
+    link: 'reviews'
+  });
+
+  return newReview;
+}
+
+export async function cancelCustomerAppointment(salonId, appointmentId, customerId, reason = '') {
+  const appointments = readData('appointments.json', []);
+  const index = appointments.findIndex((a) => a.id === appointmentId && a.salonId === salonId);
+  if (index === -1) {
+    throw new Error('Appointment not found.');
+  }
+
+  const apt = appointments[index];
+  if (customerId && apt.customerId && apt.customerId !== customerId) {
+    throw new Error('Unauthorized to cancel this appointment.');
+  }
+
+  if (apt.status === 'cancelled') {
+    throw new Error('This appointment has already been cancelled.');
+  }
+
+  if (apt.status === 'completed') {
+    throw new Error('Completed appointments cannot be cancelled.');
+  }
+
+  apt.status = 'cancelled';
+  apt.cancellationReason = reason || 'Cancelled by customer';
+  apt.cancelledAt = new Date().toISOString();
+  apt.updatedAt = new Date().toISOString();
+
+  writeData('appointments.json', appointments);
+
+  createNotification(salonId, {
+    type: 'appointment',
+    title: 'Appointment Cancelled by Customer',
+    message: `${apt.customerName} cancelled appointment on ${apt.date} at ${apt.time}. Reason: ${apt.cancellationReason}`,
+    link: 'appointments'
+  });
+
+  return apt;
+}
+
+export async function rescheduleCustomerAppointment(salonId, appointmentId, customerId, newDate, newTime, newStaffId = null) {
+  const appointments = readData('appointments.json', []);
+  const index = appointments.findIndex((a) => a.id === appointmentId && a.salonId === salonId);
+  if (index === -1) {
+    throw new Error('Appointment not found.');
+  }
+
+  const apt = appointments[index];
+  if (customerId && apt.customerId && apt.customerId !== customerId) {
+    throw new Error('Unauthorized to reschedule this appointment.');
+  }
+
+  if (apt.status === 'cancelled' || apt.status === 'completed') {
+    throw new Error(`Cannot reschedule an appointment that is already ${apt.status}.`);
+  }
+
+  const targetStaffId = newStaffId !== null ? newStaffId : apt.staffId;
+  const avail = await checkAvailability(salonId, newDate, newTime, apt.durationMinutes || 45, targetStaffId, appointmentId);
+  if (!avail.available) {
+    throw new Error(avail.reason);
+  }
+
+  const oldDate = apt.date;
+  const oldTime = apt.time;
+  apt.date = newDate;
+  apt.time = newTime;
+  if (newStaffId) {
+    apt.staffId = newStaffId;
+    const allStaff = readData('staff.json', []);
+    const st = allStaff.find((s) => s.id === newStaffId);
+    if (st) apt.staffName = st.name;
+  }
+  apt.status = 'confirmed';
+  apt.updatedAt = new Date().toISOString();
+
+  writeData('appointments.json', appointments);
+
+  createNotification(salonId, {
+    type: 'appointment',
+    title: 'Appointment Rescheduled by Customer',
+    message: `${apt.customerName} moved appointment from ${oldDate} ${oldTime} to ${newDate} at ${newTime}.`,
+    link: 'appointments'
+  });
+
+  return apt;
+}
+

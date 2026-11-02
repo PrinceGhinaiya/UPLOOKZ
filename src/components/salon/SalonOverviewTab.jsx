@@ -12,7 +12,8 @@ import {
   Play,
   Scissors,
   Star,
-  AlertCircle
+  AlertCircle,
+  UserCheck
 } from 'lucide-react';
 
 export default function SalonOverviewTab({
@@ -28,7 +29,13 @@ export default function SalonOverviewTab({
   onUpdateAppointmentStatus,
   onUpdateQueueStatus
 }) {
-  const todayStr = '2026-10-28';
+  const todayStr = (() => {
+    try {
+      return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+    } catch {
+      return new Date().toISOString().split('T')[0];
+    }
+  })();
 
   // 1. Calculations based on actual recorded database records
   const todayAppointments = appointments.filter((a) => a.date === todayStr);
@@ -41,8 +48,8 @@ export default function SalonOverviewTab({
 
   const todayRevenue = analytics.todayRevenue || 0;
 
-  const displaySalonName = salon?.name || currentUser?.salonName || 'Apex Studio & Grooming';
-  const displayOwnerName = currentUser?.name || 'Rahul Sharma';
+  const displaySalonName = salon?.name || currentUser?.salonName || 'My Salon';
+  const displayOwnerName = currentUser?.name || 'Salon Partner';
 
   // Next walk-in to serve
   const nextInQueue = waitingQueue.length > 0 ? waitingQueue[0] : null;
@@ -224,6 +231,8 @@ export default function SalonOverviewTab({
                             ? 'bg-[#F0FDF4] text-[#16A34A] border border-[#BBF7D0]'
                             : apt.status === 'in_service'
                             ? 'bg-[#E0F2FE] text-[#0284C7] border border-[#BAE6FD]'
+                            : apt.status === 'arrived'
+                            ? 'bg-[#FDF4FF] text-[#C026D3] border border-[#F5D0FE]'
                             : apt.status === 'confirmed'
                             ? 'bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE]'
                             : apt.status === 'cancelled'
@@ -233,11 +242,39 @@ export default function SalonOverviewTab({
                           {apt.status}
                         </span>
 
+                        {apt.paymentStatus === 'paid' && (
+                          <span
+                            className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0]"
+                            title={apt.paymentMethod === 'Razorpay' ? `Paid online via PayU (Ref: #${(apt.payuPaymentId || apt.payuTxnId || apt.razorpayPaymentId) || ''})` : `Paid via ${apt.paymentMethod}`}
+                          >
+                            Paid
+                          </span>
+                        )}
+
                         {apt.status === 'confirmed' && (
+                          <>
+                            <button
+                              onClick={() => onUpdateAppointmentStatus(apt.id, 'arrived')}
+                              title="Mark Client Arrived"
+                              className="p-1 rounded-lg bg-[#FDF4FF] hover:bg-[#FAE8FF] text-[#C026D3] border border-[#F5D0FE] transition-colors"
+                            >
+                              <UserCheck size={13} />
+                            </button>
+                            <button
+                              onClick={() => onUpdateAppointmentStatus(apt.id, 'in_service')}
+                              title="Start Service"
+                              className="p-1 rounded-lg bg-[#F0F9FF] hover:bg-[#E0F2FE] text-[#0EA5E9] transition-colors"
+                            >
+                              <Play size={13} />
+                            </button>
+                          </>
+                        )}
+
+                        {apt.status === 'arrived' && (
                           <button
                             onClick={() => onUpdateAppointmentStatus(apt.id, 'in_service')}
                             title="Start Service"
-                            className="p-1 rounded-lg bg-[#F0F9FF] hover:bg-[#E0F2FE] text-[#0EA5E9]"
+                            className="p-1 rounded-lg bg-[#F0F9FF] hover:bg-[#E0F2FE] text-[#0EA5E9] transition-colors"
                           >
                             <Play size={13} />
                           </button>

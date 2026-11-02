@@ -4,11 +4,12 @@
     "salonId": "salon_apex_01",
     "name": "Executive Haircut & Styling",
     "category": "Hair",
-    "price": 650,
+    "price": 0,
     "durationMinutes": 45,
     "description": "Personalized consultation, custom precision cut, revitalizing hair wash, and blowdry finish.",
     "active": true,
-    "image": ""
+    "image": "",
+    "updatedAt": "2026-10-29T15:36:21.925Z"
   },
   {
     "id": "srv_02",
@@ -86,5 +87,116 @@
     "description": "Relieves neck tension and stimulates scalp circulation with therapeutic herbal oils.",
     "active": true,
     "image": ""
+  },
+  {
+    "id": "srv_1793277082271_adda1a",
+    "salonId": "salon_apex_01",
+    "name": "Signature Royal Fade 1793277082268",
+    "category": "Haircuts",
+    "price": 950,
+    "durationMinutes": 45,
+    "description": "Luxury fade with hot towel finish",
+    "active": false,
+    "image": "",
+    "createdAt": "2026-10-29T12:31:22.271Z",
+    "updatedAt": "2026-10-29T12:31:22.291Z"
+  },
+  {
+    "id": "srv_1793277086837_88d17f",
+    "salonId": "salon_1793277086829_00ecb9",
+    "name": "Classic Haircut & Styling",
+    "category": "Hair",
+    "price": 450,
+    "durationMinutes": 40,
+    "description": "Precision cut, wash, and master style finish.",
+    "active": true,
+    "image": "",
+    "updatedAt": "2026-10-29T12:31:26.838Z"
+  },
+  {
+    "id": "srv_1793277086838_1e2eb0",
+    "salonId": "salon_1793277086829_00ecb9",
+    "name": "Beard Trim & Shape",
+    "category": "Beard & Shave",
+    "price": 300,
+    "durationMinutes": 25,
+    "description": "Clean line shaping and conditioning oil treatment.",
+    "active": true,
+    "image": "",
+    "updatedAt": "2026-10-29T12:31:26.838Z"
+  },
+  {
+    "id": "srv_1793286871182_f61b7a",
+    "salonId": "salon_apex_01",
+    "name": "Signature Royal Fade 1793286871177",
+    "category": "Haircuts",
+    "price": 950,
+    "durationMinutes": 45,
+    "description": "Luxury fade with hot towel finish",
+    "active": false,
+    "image": "",
+    "createdAt": "2026-10-29T15:14:31.182Z",
+    "updatedAt": "2026-10-29T15:14:31.199Z"
+  },
+  {
+    "id": "srv_1793286874334_6202e1",
+    "salonId": "salon_1793286874324_fa672b",
+    "name": "Classic Haircut & Styling",
+    "category": "Hair",
+    "price": 450,
+    "durationMinutes": 40,
+    "description": "Precision cut, wash, and master style finish.",
+    "active": true,
+    "image": "",
+    "updatedAt": "2026-10-29T15:14:34.334Z"
+  },
+  {
+    "id": "srv_1793286874334_fa2cf4",
+    "salonId": "salon_1793286874324_fa672b",
+    "name": "Beard Trim & Shape",
+    "category": "Beard & Shave",
+    "price": 300,
+    "durationMinutes": 25,
+    "description": "Clean line shaping and conditioning oil treatment.",
+    "active": true,
+    "image": "",
+    "updatedAt": "2026-10-29T15:14:34.334Z"
+  },
+  {
+    "id": "srv_1793286922495_342419",
+    "salonId": "salon_apex_01",
+    "name": "Signature Royal Fade 1793286922489",
+    "category": "Haircuts",
+    "price": 950,
+    "durationMinutes": 45,
+    "description": "Luxury fade with hot towel finish",
+    "active": false,
+    "image": "",
+    "createdAt": "2026-10-29T15:15:22.495Z",
+    "updatedAt": "2026-10-29T15:15:22.543Z"
+  },
+  {
+    "id": "srv_1793286926252_8671a8",
+    "salonId": "salon_1793286926243_d43f0c",
+    "name": "Classic Haircut & Styling",
+    "category": "Hair",
+    "price": 450,
+    "durationMinutes": 40,
+    "description": "Precision cut, wash, and master style finish.",
+    "active": true,
+    "image": "",
+    "updatedAt": "2026-10-29T15:15:26.252Z"
+  },
+  {
+    "id": "srv_1793286926252_c22fa0",
+    "salonId": "salon_1793286926243_d43f0c",
+    "name": "Beard Trim & Shape",
+    "category": "Beard & Shave",
+    "price": 300,
+    "durationMinutes": 25,
+    "description": "Clean line shaping and conditioning oil treatment.",
+    "active": true,
+    "image": "",
+    "updatedAt": "2026-10-29T15:15:26.252Z"
   }
 ]

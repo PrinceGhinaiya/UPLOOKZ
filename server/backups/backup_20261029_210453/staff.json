@@ -1,0 +1,87 @@
+[
+  {
+    "id": "stf_05",
+    "salonId": "salon_apex_01",
+    "name": "Rahul Sharma",
+    "role": "Owner & Creative Director",
+    "phone": "+91 98765 01234",
+    "email": "salon@example.com",
+    "avatar": "",
+    "assignedServiceIds": [
+      "srv_01",
+      "srv_02",
+      "srv_03",
+      "srv_04",
+      "srv_05"
+    ],
+    "workingHours": {
+      "start": "09:00",
+      "end": "21:00"
+    },
+    "weeklyOffDays": [],
+    "active": true,
+    "isManager": true,
+    "rating": 5,
+    "reviewsCount": 95
+  },
+  {
+    "id": "stf_1793277086834_d80a72",
+    "salonId": "salon_1793277086829_00ecb9",
+    "name": "Vikram Seth",
+    "role": "Owner & Creative Director",
+    "phone": "+91 91234 56789",
+    "email": "owner_1793277082308@test.uplookz.com",
+    "avatar": "",
+    "assignedServiceIds": [],
+    "workingHours": {
+      "start": "09:00 AM",
+      "end": "09:00 PM"
+    },
+    "weeklyOffDays": [],
+    "active": true,
+    "isManager": true,
+    "rating": 5,
+    "reviewsCount": 0,
+    "createdAt": "2026-10-29T12:31:26.834Z"
+  },
+  {
+    "id": "stf_1793286874330_a1ca51",
+    "salonId": "salon_1793286874324_fa672b",
+    "name": "Vikram Seth",
+    "role": "Owner & Creative Director",
+    "phone": "+91 91234 56789",
+    "email": "owner_1793286871212@test.uplookz.com",
+    "avatar": "",
+    "assignedServiceIds": [],
+    "workingHours": {
+      "start": "09:00 AM",
+      "end": "09:00 PM"
+    },
+    "weeklyOffDays": [],
+    "active": true,
+    "isManager": true,
+    "rating": 5,
+    "reviewsCount": 0,
+    "createdAt": "2026-10-29T15:14:34.330Z"
+  },
+  {
+    "id": "stf_1793286926248_ac33c4",
+    "salonId": "salon_1793286926243_d43f0c",
+    "name": "Vikram Seth",
+    "role": "Owner & Creative Director",
+    "phone": "+91 91234 56789",
+    "email": "owner_1793286922563@test.uplookz.com",
+    "avatar": "",
+    "assignedServiceIds": [],
+    "workingHours": {
+      "start": "09:00 AM",
+      "end": "09:00 PM"
+    },
+    "weeklyOffDays": [],
+    "active": true,
+    "isManager": true,
+    "rating": 5,
+    "reviewsCount": 0,
+    "createdAt": "2026-10-29T15:15:26.249Z"
+  }
+]

@@ -1,0 +1,12 @@
+[
+  {
+    "id": "blk_01",
+    "salonId": "salon_apex_01",
+    "staffId": null,
+    "date": "2026-10-28",
+    "startTime": "01:30 PM",
+    "endTime": "02:00 PM",
+    "reason": "Staff Lunch & Sanitization Break",
+    "createdAt": "2026-10-28T08:00:00.000Z"
+  }
+]

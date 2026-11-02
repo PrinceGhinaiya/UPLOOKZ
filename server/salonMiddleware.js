@@ -4,6 +4,7 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { getSessionUser } from './authService.js';
 import * as salonService from './salonService.js';
+import { readData, writeData } from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,10 +19,10 @@ function readJsonBody(req) {
     let body = '';
     req.on('data', (chunk) => {
       body += chunk;
-      if (body.length > 10 * 1024 * 1024) {
-        // 10MB limit for image uploads
+      if (body.length > 25 * 1024 * 1024) {
+        // 25MB limit for high-resolution image uploads
         req.socket.destroy();
-        reject(new Error('Payload too large'));
+        reject(new Error('Payload too large. Maximum size is 25MB.'));
       }
     });
     req.on('end', () => {
@@ -53,7 +54,7 @@ function getBearerToken(req) {
 }
 
 /**
- * Resolve salon context from auth token or fallback to Rahul Sharma's salon
+ * Resolve salon context from auth token strictly scoped to owner
  */
 async function resolveSalon(req) {
   const token = getBearerToken(req);
@@ -65,15 +66,18 @@ async function resolveSalon(req) {
     }
   }
 
-  // If user has a registered salon, find by owner id
+  // If user has a registered salon, find by owner id or email
   let salon = null;
   if (user) {
     salon = await salonService.getSalonByOwner(user.id);
-  }
-
-  // Fallback to default primary salon for dev mode / seamless experience
-  if (!salon) {
-    salon = await salonService.getSalonById('salon_apex_01');
+    if (!salon && user.email) {
+      const allSalons = await salonService.getAllSalons();
+      salon = allSalons.find((s) => s.email && s.email.toLowerCase() === user.email.toLowerCase()) || null;
+    }
+  } else {
+    // Fallback for unauthenticated preview / dev requests
+    const allSalons = await salonService.getAllSalons();
+    salon = allSalons[0] || null;
   }
 
   return { salon, user };
@@ -145,8 +149,42 @@ export async function salonMiddleware(req, res, next) {
     if (req.method === 'POST' && (cleanPath === '/create' || cleanPath === 'create')) {
       const { user } = await resolveSalon(req);
       const body = await readJsonBody(req);
-      const ownerId = user ? user.id : `usr_${Date.now()}`;
+      const ownerId = user ? user.id : (body.ownerId || `usr_${Date.now()}`);
       const newSalon = await salonService.createSalon(ownerId, body);
+
+      const users = readData('users.json', {});
+      const email = user?.email || body.email;
+      let matchedKey = null;
+
+      for (const key of Object.keys(users)) {
+        if ((user && users[key].id === user.id) || (email && users[key].email?.toLowerCase() === email.toLowerCase())) {
+          matchedKey = key;
+          break;
+        }
+      }
+
+      if (matchedKey) {
+        const currentRoles = users[matchedKey].roles || ['customer'];
+        if (!currentRoles.includes('salon')) currentRoles.push('salon');
+        users[matchedKey].roles = currentRoles;
+        users[matchedKey].activeRole = 'salon';
+        users[matchedKey].salonName = newSalon.name;
+        users[matchedKey].salonId = newSalon.id;
+      } else if (email) {
+        users[email] = {
+          id: ownerId,
+          email: email,
+          name: body.ownerName || 'Salon Owner',
+          roles: ['salon'],
+          activeRole: 'salon',
+          salonName: newSalon.name,
+          salonId: newSalon.id,
+          createdAt: new Date().toISOString(),
+          isVerified: true
+        };
+      }
+      writeData('users.json', users);
+
       return sendJson(res, 201, { success: true, salon: newSalon });
     }
 
@@ -259,11 +297,41 @@ export async function salonMiddleware(req, res, next) {
     }
 
     const aptStatusMatch = cleanPath.match(/^\/appointments\/([a-zA-Z0-9_-]+)\/status$/);
-    if (req.method === 'POST' && aptStatusMatch) {
+    if ((req.method === 'POST' || req.method === 'PUT') && aptStatusMatch) {
       const aptId = aptStatusMatch[1];
       const { salon } = await resolveSalon(req);
       const body = await readJsonBody(req);
-      const updated = await salonService.updateAppointmentStatus(salon.id, aptId, body.status, body.notes);
+      const updated = await salonService.updateAppointmentStatus(salon.id, aptId, body.status, body.notes, body.paymentData);
+      return sendJson(res, 200, { success: true, appointment: updated });
+    }
+
+    const aptDirectMatch = cleanPath.match(/^\/appointments\/([a-zA-Z0-9_-]+)$/);
+    if (req.method === 'PUT' && aptDirectMatch) {
+      const aptId = aptDirectMatch[1];
+      const { salon } = await resolveSalon(req);
+      const body = await readJsonBody(req);
+      let updated = null;
+      if (body.status) {
+        updated = await salonService.updateAppointmentStatus(salon.id, aptId, body.status, body.notes);
+      }
+      if (body.paymentStatus) {
+        updated = await salonService.updateAppointmentPaymentStatus(salon.id, aptId, body.paymentStatus, body.paymentMethod);
+      }
+      return sendJson(res, 200, { success: true, appointment: updated });
+    }
+
+    const aptPaymentMatch = cleanPath.match(/^\/appointments\/([a-zA-Z0-9_-]+)\/payment$/);
+    if (req.method === 'POST' && aptPaymentMatch) {
+      const aptId = aptPaymentMatch[1];
+      const { salon } = await resolveSalon(req);
+      const body = await readJsonBody(req);
+      const updated = await salonService.updateAppointmentPaymentStatus(
+        salon.id,
+        aptId,
+        body.paymentStatus || 'paid',
+        body.paymentMethod || 'Cash',
+        body.amount
+      );
       return sendJson(res, 200, { success: true, appointment: updated });
     }
 
@@ -344,7 +412,9 @@ export async function salonMiddleware(req, res, next) {
     if (cleanPath === '/analytics' || cleanPath === 'analytics') {
       const { salon } = await resolveSalon(req);
       const timeframe = queryParams.get('timeframe') || 'month';
-      const analytics = await salonService.getAnalytics(salon.id, timeframe);
+      const startDate = queryParams.get('startDate');
+      const endDate = queryParams.get('endDate');
+      const analytics = await salonService.getAnalytics(salon.id, timeframe, { startDate, endDate });
       return sendJson(res, 200, { success: true, analytics });
     }
 

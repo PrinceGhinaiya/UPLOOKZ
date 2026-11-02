@@ -18,9 +18,9 @@ export default function SalonSettingsTab({
   currentUser,
   onNavigate
 }) {
-  const [name, setName] = useState(currentUser?.name || 'Rahul Sharma');
-  const [email, setEmail] = useState(currentUser?.email || 'salon@example.com');
-  const [phone, setPhone] = useState(currentUser?.phone || '+91 98765 01234');
+  const [name, setName] = useState(currentUser?.name || '');
+  const [email, setEmail] = useState(currentUser?.email || '');
+  const [phone, setPhone] = useState(currentUser?.phone || '');
   const [saved, setSaved] = useState(false);
 
   const handleSaveProfile = (e) => {
@@ -115,7 +115,8 @@ export default function SalonSettingsTab({
               <input
                 type="text"
                 disabled
-                value={salon?.name || 'Apex Studio & Grooming'}
+                value={salon?.name || currentUser?.salonName || ''}
+                placeholder="No salon registered yet"
                 className="w-full px-3.5 py-2 text-sm border border-[#E2E8F0] bg-[#F8FAFC] text-[#64748B] rounded-lg cursor-not-allowed"
               />
             </div>
